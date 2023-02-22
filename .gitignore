@@ -3,5 +3,6 @@
 #ignore autosave files and figures
 data/* 
 code/*.asv
-figures/*.pdf
+figures/*
+spotcheck_flow_images/*
 
