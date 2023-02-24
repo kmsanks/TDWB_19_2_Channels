@@ -1,14 +1,14 @@
-# TDWB_19_2_MassBalance_Morphology
-[![DOI](https://zenodo.org/badge/451958614.svg)](https://zenodo.org/badge/latestdoi/451958614)
+# TDWB_19_2_Channels
+#######INSERT ZENODO LINK##########
 
 ## Introduction
-This README file describes kmsanks/TDWB_19_2_MassBalance_Morphology repository of scripts used to calculate changes in morphology and mass balance due to marsh deposition in an experimental setting. The raw experimental data can be found in the Tulane_Sediment_Dynamics_Stratigraphy_TSDS project space at: https://sead2.ncsa.illinois.edu/spaces/5825f529e4b0f3dd19c8d93a. The data used here is TDB-18-1 and TDWB-19-2-Surface-Processes. The processed data used in the code is contained herein. 
+This README file describes kmsanks/TDWB_19_2_Channels repository of scripts used to calculate changes in channel morphology and kinematics due to marsh deposition in an experimental setting. The raw experimental data can be found in the Tulane_Sediment_Dynamics_Stratigraphy_TSDS project space at: https://sead2.ncsa.illinois.edu/spaces/5825f529e4b0f3dd19c8d93a. The data used here is TDB-18-1 and TDWB-19-2-Surface-Processes. The processed data used in the code is contained herein. 
 
 The experimental delta data come from two experiments run at the Tulane Sediment Dynamics Laboratory. Both experiments were setup identically, except for TDWB-19-2 (treatment) had marsh proxy deposition, while TDB-18-1 (control) did not. 
 For more information on experimental conditions, please see the data repositories hosted at: https://sead2.ncsa.illinois.edu/spaces/5825f529e4b0f3dd19c8d93a.
 
 ## What does this repository provide?
-This repository contains all of the code relevant to produce the results and figures contained in the manuscript titled "Marsh sedimentation controls delta top morphology, slope, and mass balance (Sanks et al., in review)". The code contained herein was written using MATLAB R2019b. Note: all the "Core Script Files" should run out the box, as relative paths were used in creation of this script.
+This repository contains all of the code relevant to produce the results and figures contained in the manuscript titled "Non-fluvial deposition has a first-order control on channel properties and kinematics in an experimental river delta (Sanks et al., in review)". The code contained herein was written using MATLAB R2022a. Note: all the "Core Script Files" should run out the box, as relative paths were used in creation of this script.
 
 ## Contents
 The repository contains three folders:
@@ -17,9 +17,11 @@ The repository contains three folders:
  2. data
  3. figures
  
-Please clone the repository in full in order to use the repo, as the code relies on the .mat files contained in the "data" folder. All data needed to run scripts is contained herein.
+Please clone the repository in full in order to use the repo. Then download the .mat files from FIGSHARE REPO and put into the data folder. All figure outputs will populate within the figures folder. Note: some figures were modified in Illustrator for visual purposes.
 
-## Data: TDWB_19_2_MassBalance_Morphology\data
+## Data: TDWB_19_2_Channels\data
+Please download the following files from FIGSHRE REPO and put into this folder. 
+
 1. ZD_18.mat - A matrix of size 796x522x560, where 560 is time. Each timestep contains a elevation data collected from the control experiment via LiDAR and post-processed into a 5mmx5mm grid. The data has 796 rows and 522 columns corresponding to basin location.
   
   *Note that the matrix has 560 timesteps, which corresponds to one LiDAR scan per hour. The first run hour is t = 1, total run time = 560 hours.
@@ -28,55 +30,61 @@ Please clone the repository in full in order to use the repo, as the code relies
   
   *Note that the matrix only has 281 timesteps because the LiDAR data was collected every other hour. The first run hour is t = 0, total run time = 560 hours.
   
-3. chanMaps_18.mat - A matrix of size 796x522x560. The data contained herein is the same reference frame as described above for ZD_18 (control). This data is a binary matrix, where channel pixels = 1 and non-channel pixels = 0.
+3. CM_18.mat - A matrix of size 796x522x560. The data contained herein is the same reference frame as described above for ZD_18 (control). This data is a binary matrix, where channel pixels = 1 and non-channel pixels = 0.
  
-4. chanMaps_19.mat - A matrix of size 796x522x560. The data contained herein is the same reference frame as described above for ZD_19 (treatment). This data is a binary matrix, where channel pixels = 1 and non-channel pixels = 0.
+4. CM_19.mat - A matrix of size 750x747x560. The data contained herein is the same reference frame as described above for ZD_19 (treatment), but contains a channel map for each timestep. This data is a binary matrix, where channel pixels = 1 and non-channel pixels = 0.
 
-5. interpolated_marsh_strat_frac.mat - A matrix of 750x747 containing the interpolated fraction of marsh preserved in the stratigraphy (i.e., thickness of marsh deposit at pixel/total stratigraphic thickness of pixel). For interpolation methods see the supporting information from (Sanks et al, in review). 
+   *Note that some timesteps do not have a channel map due to issues with dye timing or cart artifacts in the LiDAR scan. These timesteps will have an empty matrix of NaNs.
 
-6. MRD.mat (61x4), GBMD.mat (61x4), mekong.mat (22x4), riogrande.mat (31x4) - Global delta data. These data contain 4 columns. Column 1 is the median elevation of 2 m bins, column 2 is the number of pixels at that elevation, column 3 is the normalized elevation (column 1/channel depth), and column 4 is the probability of a pixel being in that elevation bin (column 2/sum(column 2)). 
-  
-  *Note: the data herein comes from Google Earthh Engine ETOPO. The raw data can be found in the corresponding *_raw.csv
-  
-  *MRD = Mississippi River Delta, GBMD = Ganges Brahamaputra Meghna River Delta, mekong = Mekong River Delta, and riogrande = Rio Grande River Delta.
-  
-  *The elevation data ranges from -1 to 3 channel depths relative to sea level. 
+5. flowscreen18.mat - A binary matrix of 796x522x560, where 1 = flow, 0 = no-flow. 
 
-## Core Script Files: TDWB_19_2_MassBalance_Morphology\data
-1. area.m - This script calculates area of both the control and treatment experiments for different zones of the delta. 
-   * This sciript produces Figure 2a. 
-   * Data needed: ZD_18.mat and ZD_19.mat.
-2. elevation_histogram.m - This script calculates the distribution of elevations relative to sea level for both the control and treatment experiments.
-   * This script produces Figure 2b.
-   * Data needed: ZD_18.mat and ZD_19.mat.
-3. slope.m - This script calculates the delta top slope for different zones in both the control and treatment experiments using a gradient.
-   * This script produces Figure 2c.
-   * Data needed: ZD_18.mat and ZD_19.mat
-4. radial_elevation.m - This script calculates the mean and standard deviation about the mean for various radial distances from the entrance channel for both the control and treatment experiments.
-   * This script produces Figure 2d.
-   * Data needed: ZD_18.mat, ZD_19.mat, chanMaps_18.mat, and chanMaps_19.mat.
-5. volume.m - This script calculates the 50% delta top, 10% marsh window, and 90% above marsh volume for the control and treatment experiments. See manuscript for further details.
+6. flowscreen19.mat - A binary matrix of 750x747x560, where 1 = flow, 0 = no-flow.  
+
+   *Note that some timesteps have impaired flowmaps due to missing dye or cart artifacts in the LiDAR scan. These timesteps are removed from analyses and noted in flowfraction.m lines 147-152.  
+
+## Core Script Files: TDWB_19_2_Channels/code
+1. flowfraction.m - This script calculates total, channel, and overbank flow area and fraction for both the control and treatment experiments for the terrestrial delta. 
+   * This sciript produces Figure 2 and some results from Table 1. 
+   * Data needed: ZD_18.mat, CM_18.mat, flowscreen18.mat, ZD_19.mat, CM_19.mat, and flowscreen19.mat.
+2. radial_channel_elevation.m - This script calculates the average channel bed elevations relative to sea level as a function of radial distance from the apex for both the control and treatment experiments.
+   * This script produces Figure 3a.
+   * Data needed: ZD_18.mat, CM_18.mat, ZD_19.mat, and CM_19.mat.
+3. channel_length.m - This script calculates the channel length for the control and treatment experiments through time.
+   * This script produces Figure 3b and some results from Table 1.
+   * Data needed: CM_18.mat and CM_19.mat
+4. channel_width_agg_infill.m - This script calculates the maximum channel width, number of channels, channel aggradation rate, far-field aggradation rate, and channel in-filling rate as a function radial distances from the apex for both the control and treatment experiments.
+   * This script produces Figures 3c, 5b, and 5c and some results from Figure 1.
+   * Data needed: ZD_18.mat, CM_18.mat, ZD_19.mat, and CM_19.mat.
+5. backwater.m - This script calculates the backwater length for the control and treatment experiments through time. See manuscript for more details.
+   * This script produces Figure 4 and some results in Table 1.
+   * Data needed: ZD_18.mat, CM_18.mat, ZD_19.mat, and CM_19.mat.
+6. channel_depth.m - This script calculates the channel depth, aggradation, and compensation timescale as a function of radial distance from the apex.
    * This script produces some results in Table 1.
-   * Data needed: ZD_18.mat, ZD_19.mat, and interpolated_marsh_strat_frac.mat.
-6. trapping_efficiency.m - This script calculates the trapping efficiency for the regions describe above (volume.m), as well as the volume accumulated in the off-shore for both the control and treatment experiments.
-   * This script produces some results in Table 1 and Figure 3.
-   * Data needed: ZD_18.mat, ZD_19.mat, and interpolated_marsh_strat_frac.mat.
-7. delta_hypsometry.m - This script calculates the global delta hypsometry and the experimental delta hypsometry (normalized by channel depth for comparison across scales).
-   * This script produces Figure 4.
-   * Data needed: MRD.mat, GBMD.mat, mekong.mat, riogrande.mat, ZD_18.mat, and ZD_19.mat.
+   * Data needed: ZD_18.mat, CM_18.mat, ZD_19.mat, and CM_19.mat.
+7. aggradation.m - This script calculates the mean channel and far-field aggradation rate for the delta area >= -9 mm relative to sea level and as a function of distance from the apex. It also calulates a mean channel in-filling rate for the delta, which relies on channel depth from previous script (channel_depth.m).
+   * This script produces Figure 5a and some results in Table 1.
+   * Data needed: ZD_18.mat, CM_18.mat, ZD_19.mat, and CM_19.mat.
+   * Note: this script relies on mean channel depth and standard deviation
+8. lateral_mobility.m - This script calculates lateral channel mobility, fraction of the delta that is unmodified, and channelization statistics. 
+   * This script produces Figure 6 and SI Figures B1, B7, and B8, as well as some results in Table 1.
+   * Data needed: ZD_18.mat, CM_18.mat, ZD_19.mat, and CM_19.mat.
   
-## Supplementary Script Files
- 1. GEE_delta_data.m - This script creates the matrices of the global delta data (MRD.mat, GBMD.mat, mekong.mat, and riogrande.mat).
-  
-  *Note: This script does not needed to be run because the data produced here is already included in the repository.
-  
-  *Note: This script will not run out of the box, and you must read through and follow the step by step directions contained in the code in order to replicate the matrices provided. 
-    * User must copy/paste data from the delta .csv files included (e.g., MRD_raw.csv, GBMD_raw.csv, mekong_raw.csv, and riogrande_raw.csv).
-    * The data here is clipped to -1 to 3 channel depths relative to sea level.
-    * Only paste the data within this range. 
+## Supplementary Script Files: TDWB_19_2_Channels/code
+ 1. SI_planform_overlap.m - This script calculates the channel decorrelation metric based on Wickert et al.(2013).
+   * This script produces SI Figure B4.
+   * Data needed: ZD_18.mat, CM_18.mat, ZD_19.mat, and CM_19.mat.
+ 2. SI_planform_overlap_allflow.m - This script calculates the decorrelation metric for all flow on the terrestrial delta based on Wickert et al. (2013).
+   * This script produces SI Figure B5.
+   * Data needed: ZD_18.mat, flowscreen18.mat, ZD_19.mat, and flowscreen19.mat.
+ 3. SI_planform_overlap_overbank.m - This script calculates the decorrelation metric for the overbank flow on the terrestrail delta based on Wickert et al. (2013).
+   * This script produces SI Figure B6.
+   * Data needed: ZD_18.mat, CM_18.mat, flowscreen18.mat, ZD_19.mat, CM_19.mat, and flowscreen19.mat.
+ 4. SI_efold_visitation.m - This script creates the time it takes for the channels to visit one e-fold (66% for control and 67% for treatment) of the terrestrial delta top as a function of time.
+   * This script produces SI Figure B9.
+   * Data needed: ZD_18.mat, CM_18.mat, ZD_19.mat, and CM_19.mat. 
 
 ## Figures
 The figures will be created when the scripts are run. Currently there is only a README.txt files in this folder as a place holder. 
 
 ## Using this repository
-Clone the repository. The scripts can be run in any order, but please note that the "Supplementary Script Files" will not run without some copy and paste from the .csv files provided in the "data" folder. More information can be found in script.  
+Clone the repository. The scripts can be run in any order, but please note that the data (.mat files) need to be downloaded from FIGSHRE REPOSITORY and placed in the data folder first.
