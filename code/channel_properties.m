@@ -122,19 +122,11 @@ end
 %% Channel properties loop: here we will calculate radial channel properties (channel area, width, depth, number of channels)
 % control first
 % initialize empty matrices 
-elev18 = []; % channel bed elevation relative to sea level
-elev_std18 = []; % channel bed elevation relative to sea level
-area18 = []; % channel area
-area_std18 =[]; % standard deviation of channel area
-depth18 = []; % channel depth
-depth_std18 = []; % standard deviation of channel depth
+elev18 = NaN(31,280); % channel bed elevation relative to sea level
+area18 = NaN(31,280); % total channel area
 Hc_18 = NaN(31,280); % channel depth with distance and time to use in aggradation below
-width18 = []; % channel width
-width_std18 = []; % standard deviation of channel width
-maxwidth18 = []; % maximum channel width
-maxwidth_std18 = []; % standard deviation of maximum channel width
-n_chan18 = []; % number of channels
-n_chan_std18 =[]; % standard deviation of the number of channels
+maxwidth18 = NaN(31,280); % trunk channel width
+n_chan18 = NaN(31,280); % number of channels
 dist = 0:100:3100; % distance we will calculate for (from 0 to 3100 mm, by 10 mm or 0.01 m).. we could change this if we want finer grained information
 % loop through radial distances 
 for k = 1:(length(dist)-1) % loop to run through different radial distances from the apex.
@@ -143,12 +135,6 @@ for k = 1:(length(dist)-1) % loop to run through different radial distances from
     idx = dd18(dd18 >= dist(k) & dd18 < dist(k+1));
     radial_dd = dd18 >= dist(k) & dd18 < dist(k+1); % can look at this using imagesc(radial_dd) to visualize a 0.1 m radial transect
     % initialize empty matrices 
-    bed_elev18 = [];
-    chan_area18 = []; 
-    chan_depth18 = [];
-    chan_width18 = [];
-    chan_width_max18 = [];
-    n_chan_i = [];
     for i = 1:size(CM_18,3) % loop through all timesteps
         z = ZD_18(:,:,i); % elevation data for channel depth
         is_shot = CM_18(:,:,i).*radial_dd; % in channel or no?
@@ -157,10 +143,21 @@ for k = 1:(length(dist)-1) % loop to run through different radial distances from
         is_chan(is_chan == 0) = NaN;
         z_rsl = z18(:,:,i).*is_chan;
         bed = mean(z_rsl(:), 'omitnan');
-        bed_elev18 = [bed_elev18; bed];
+        % save channel bed elevation for each distance through time
+        if isempty(bed)
+            elev18(k,i) = NaN;
+        else 
+            elev18(k,i) = bed;
+        end
         [label,n] = bwlabel(is_shot); % label gives a unique number to each individual segement recognized; n is number of channels (or segments)
         ns_prop = regionprops(label, 'Area'); % this will calculate area for each of the segments
         list_area = (cell2mat({ns_prop.Area}'))*0.25; % area for each channel segment cm^2
+        % save total channel area for each distance through time
+        if isempty(list_area)
+            area18(k,i) = NaN;
+        else
+            area18(k,i) = sum(list_area); 
+        end
         % we will calculate depth for each channel here
         depth = [];
         for j = 1:n % loop through channel segments
@@ -174,36 +171,27 @@ for k = 1:(length(dist)-1) % loop to run through different radial distances from
             depth = [depth, tmp_depth];
         end
         depth = max(depth); % we don't want to average in the non-trunk channels, as they are often a lot shallower
+        % save channel depth for each distance through time
         if isempty(depth)
             Hc_18(k,i) = NaN;
         else
             Hc_18(k,i) = depth;
         end
-        chan_depth18 = [chan_depth18;depth];
-        %list_diam = cell2mat({ns_prop.EquivDiameter}'); %could also do
-        %MajorAxisLength and MinorAxisLength, but length > width would mess
-        %this up, so lets just assume length = 1 cm (as bins are 1cm
-        %radius)
-        list_width = (list_area)/10; % width in cm, assuming length is 1 cm
+        list_width = (list_area)/10; % width in cm, assuming length is 10 cm
         list_width_max = max(list_width); % maximum width in radial segement (this is the "trunk" channel)
-        chan_area18 = [chan_area18;list_area]; 
-        chan_width18 = [chan_width18;list_width];
-        chan_width_max18 = [chan_width_max18;list_width_max];
-        n_chan = n;
-        n_chan_i = [n_chan_i;n_chan];
+        % save trunk channel width for each distance through time
+        if isempty(list_width_max)
+            maxwidth18(k,i) = NaN;
+        else
+            maxwidth18(k,i) = list_width_max; 
+        end
+        % save number of channels for each distance through time
+        if isempty(n)
+            n_chan18(k,i) = NaN;
+        else
+            n_chan18(k,i) = n;
+        end
     end
-    elev18(:,k) = mean(bed_elev18, 'omitnan'); % mm rsl
-    elev_std18(:,k) = std(bed_elev18, 'omitnan'); % mm rsl
-    area18(:,k) = mean(chan_area18, 'omitnan'); %cm^2
-    area_std18(:,k) = std(chan_area18, 'omitnan'); %cm^2
-    depth18(:,k) = mean(chan_depth18, 'omitnan'); %mm
-    depth_std18(:,k) = std(chan_depth18, 'omitnan'); %mm
-    width18(:,k) = mean(chan_width18, 'omitnan'); %cm
-    width_std18(:,k) = std(chan_width18, 'omitnan'); %cm
-    maxwidth18(:,k) = mean(chan_width_max18, 'omitnan'); %cm
-    maxwidth_std18(:,k) = std(chan_width_max18, 'omitnan'); %cm
-    n_chan18(:,k) = mean(n_chan_i, 'omitnan'); %number of channels
-    n_chan_std18(:,k) = std(n_chan_i, 'omitnan'); %number of channels
 end 
 
 % treatment
@@ -215,19 +203,11 @@ for i = 1:size(CM_19,3)
 end
 
 % initialize empty matrices
-elev19 = []; % channel bed elevation relative to sea level
-elev_std19 = []; % channel bed elevation relative to sea level
-area19 = []; % channel area
-area_std19 =[]; % standard deviation of channel area
-depth19 = []; % channel depth
-depth_std19 = []; % standard deviation of channel depth 
-Hc_18 = NaN(31,280); % channel depth with distance and time to use in aggradation below
-width19 = []; % channel width
-width_std19 = []; % standard deviation of channel width
-maxwidth19 = []; % maximum channel width
-maxwidth_std19 = []; % standard deviation of maximum channel width
-n_chan19 = []; % number of channels
-n_chan_std19 =[]; % standard deviation of the number of channels
+elev19 = NaN(31,280); % channel bed elevation relative to sea level
+area19 = NaN(31,280); % total channel area
+Hc_19 = NaN(31,280); % channel depth with distance and time to use in aggradation below
+maxwidth19 = NaN(31,280); % trunk channel width
+n_chan19 = NaN(31,280); % number of channels
 % run loop
 for k = 1:(length(dist)-1)%loop to run through different radial distances from the end of the apex.
     %section to find x,y nodes for radial transect and generate matrix of
@@ -235,41 +215,37 @@ for k = 1:(length(dist)-1)%loop to run through different radial distances from t
     idx = dd19(dd19 >= dist(k) & dd19 < dist(k+1));
     radial_dd = dd19 >= dist(k) & dd19 < dist(k+1);
     %how many channel pixels in the radius?
-    bed_elev19 = [];
-    chan_area19 = [];
-    chan_depth19 = [];
-    chan_width19 = [];
-    chan_width_max19 = [];
-    n_chan_i = [];
-    bed_elev19 = [];
     for i = 1:size(CM_19,3) % loop through each timestep
         z = ZD_19(:,:,i); % elevation data for channel depth
         is_shot = CM_19(:,:,i).*radial_dd; % in channel or no?
         z = z.*is_shot; % elevation in the channels
         depth = [];
         if sum(sum(is_shot, 'omitnan')) == 0 % do not calculate channel properties for timesteps with no channel map
-            n = NaN;
-            ns_prop = NaN;
-            list_area = NaN;
-            list_width = NaN;
-            list_width_max = NaN;
-            depth = NaN;
-            Hc_18(k,i) = NaN;
-            z_rsl = NaN;
+            elev19(k,i) = NaN;
+            area19(k,i) = NaN;
+            Hc_19(k,i) = NaN;
+            maxwidth19(k,i) = NaN;
+            n_chan19(k,i) = NaN;
         else %calculate channel properties for all other timesteps
             is_chan = is_shot;
             is_chan(is_chan == 0) = NaN;
             z_rsl = z19(:,:,i).*is_chan; 
             bed = mean(z_rsl(:), 'omitnan');
-            bed_elev19 = [bed_elev19; bed];
+            % save channel bed elevation for each distance through time
+            if isempty(bed)
+                elev19(k,i) = NaN;
+            else 
+                elev19(k,i) = bed;
+            end
             [label,n] = bwlabel(is_shot);
             ns_prop = regionprops(label, 'Area');
             list_area = (cell2mat({ns_prop.Area}'))*0.25; %cm^2
-            %list_diam = cell2mat({ns_prop.EquivDiameter}'); %could also do
-            %MajorAxisLength and MinorAxisLength, but length > width would mess
-            %this up, so lets just assume length = 10 cm (as bins are 10cm
-            %radius)
-            % we will calculate depth for each channel here
+            % save total channel area for each distance through time
+            if isempty(list_area)
+                area19(k,i) = NaN;
+            else
+                area19(k,i) = sum(list_area); 
+            end
             for j = 1:n % loop through all channels
                 tmp = label;
                 tmp(tmp ~= j) = NaN; % remove all data that is not in segement n
@@ -282,61 +258,59 @@ for k = 1:(length(dist)-1)%loop to run through different radial distances from t
             end
             depth = max(depth); % we don't want to average in the non-trunk channels, as they are often a lot shallower
             if isempty(depth)
-                Hc_18(k,i) = NaN;
+                Hc_19(k,i) = NaN;
             else
-                Hc_18(k,i) = depth;
+                Hc_19(k,i) = depth;
             end
             list_width = (list_area)/10; % divide by channel length, which is 1 cm
             list_width_max = max(list_width);
+            % save trunk channel width for each distance through time
+            if isempty(list_width_max)
+                maxwidth19(k,i) = NaN;
+            else
+                maxwidth19(k,i) = list_width_max; 
+            end
+            % save number of channels for each distance through time
+            if isempty(n)
+                n_chan19(k,i) = NaN;
+            else
+                n_chan19(k,i) = n;
+            end
         end
-        chan_area19 = [chan_area19;list_area];
-        chan_depth19 = [chan_depth19;depth];
-        chan_width19 = [chan_width19;list_width];
-        chan_width_max19 = [chan_width_max19;list_width_max];
-        n_chan = n;
-        n_chan_i = [n_chan_i;n_chan];
     end
-    elev19(:,k) = mean(bed_elev19, 'omitnan'); % mm rsl
-    elev_std19(:,k) = std(bed_elev19, 'omitnan'); % mm rsl
-    area19(:,k) = mean(chan_area19, 'omitnan'); % cm^2
-    area_std19(:,k) = std(chan_area19, 'omitnan'); % cm^2
-    depth19(:,k) = mean(chan_depth19, 'omitnan'); % mm
-    depth_std19(:,k) = std(chan_depth19, 'omitnan'); % mm
-    width19(:,k) = mean(chan_width19, 'omitnan'); % cm
-    width_std19(:,k) = std(chan_width19, 'omitnan'); % cm
-    maxwidth19(:,k) = mean(chan_width_max19, 'omitnan'); % cm
-    maxwidth_std19(:,k) = std(chan_width_max19, 'omitnan'); % cm
-    n_chan19(:,k) = mean(n_chan_i, 'omitnan'); % number of channels
-    n_chan_std19(:,k) = std(n_chan_i, 'omitnan'); % number of channels
 end 
 
 %% Calculate statistics for Table 1:
 % trunk channel width
-width_mean18 = mean(maxwidth18, 'omitnan');
-width_std18 = std(maxwidth18, 'omitnan');
-width_mean19 = mean(maxwidth19, 'omitnan');
-width_std19 = std(maxwidth19, 'omitnan');
+width_mean18 = mean(maxwidth18(:), 'omitnan');
+width_std18 = std(maxwidth18(:), 'omitnan');
+width_mean19 = mean(maxwidth19(:), 'omitnan');
+width_std19 = std(maxwidth19(:), 'omitnan');
 
 % trunk channel depth
-depth_mean18 = mean(depth18, 'omitnan');
-depth_std18 = std(depth18, 'omitnan');
-depth_mean19 = mean(depth19, 'omitnan');
-depth_std19 = std(depth19, 'omitnan');
+depth_mean18 = mean(Hc_18(:), 'omitnan');
+depth_std18 = std(Hc_18(:), 'omitnan');
+depth_mean19 = mean(Hc_19(:), 'omitnan');
+depth_std19 = std(Hc_19(:), 'omitnan');
 
 % mean channel bed elevation relative to sea level
-celev_mean18 = mean(elev18, 'omitnan');
-celev_std18 = std(elev18, 'omitnan');
-celev_mean19 = mean(elev19, 'omitnan');
-celev_std19 = std(elev19, 'omitnan');
+celev_mean18 = mean(elev18(:), 'omitnan');
+celev_std18 = std(elev18(:), 'omitnan');
+celev_mean19 = mean(elev19(:), 'omitnan');
+celev_std19 = std(elev19(:), 'omitnan');
 
 %% Plot the data: Figure 3a
 ybars = [-9 5]; % marsh window
-
-array18 = [0:0.1:3; elev18; elev_std18];
+dist = 0:0.1:3;
+el18 = mean(elev18,2, 'omitnan');
+stdev18 = std(elev18,[],2, 'omitnan');
+array18 = [dist; el18'; stdev18'];
 cols = any(isnan(array18),1);
 array18(:,cols) = [];
 
-array19 = [0:0.1:3; elev19; elev_std19];
+el19 = mean(elev19,2, 'omitnan');
+stdev19 = std(elev19,[],2, 'omitnan');
+array19 = [dist; el19'; stdev19'];
 cols = any(isnan(array19),1);
 array19(:,cols) = [];
 
@@ -364,8 +338,8 @@ alpha(0.15)
 yline(0, 'k-', 'linewidth', 2)
 plot(x18, y18, 'b', 'LineWidth', 2)
 plot(x19, y19, 'g', 'LineWidth', 2)
-ylim([-40 50])
-xlim([0 3.1])
+ylim([-20 40])
+xlim([0 3])
 ylabel('mean channel bed elevation relative to sea level (mm)')
 xlabel('radial distance from channel entrance (m)') 
 legend('control mean', 'treatment mean', 'control stdev', 'treatment stdev', 'marsh window', 'sea level')
@@ -374,13 +348,62 @@ y_width=7.25;x_width=9.125;
 set(gcf, 'PaperPosition', [0 0 x_width y_width]);
 saveas(fig, '../figures/esurf_Figure3a.pdf')
 
+%% Channel depth: visualization
+d18 = mean(Hc_18,2, 'omitnan');
+stdev18 = std(Hc_18,[],2, 'omitnan');
+array18 = [dist; d18'; stdev18'];
+cols = any(isnan(array18),1);
+array18(:,cols) = [];
+
+d19 = mean(Hc_19,2, 'omitnan');
+stdev19 = std(Hc_19,[],2, 'omitnan');
+array19 = [dist; d19'; stdev19'];
+cols = any(isnan(array19),1);
+array19(:,cols) = [];
+
+%fill standard deviation
+y18 = array18(2,:); % your mean vector;
+x18 = array18(1,:);
+std18 = array18(3,:);
+curve1_18 = y18 + std18;
+curve2_18 = y18 - std18;
+
+y19 = array19(2,:); % your mean vector;
+x19 = array19(1,:);
+std19 = array19(3,:);
+curve1_19 = y19 + std19;
+curve2_19 = y19 - std19;
+
+figure()
+plot(x18, y18, 'b', 'LineWidth', 2)
+hold on
+plot(x19, y19, 'g', 'LineWidth', 2)
+patch([x18 fliplr(x18)], [curve1_18 fliplr(curve2_18)], 'b')
+patch([x19 fliplr(x19)], [curve1_19 fliplr(curve2_19)], 'g')
+alpha(0.15)
+plot(x18, y18, 'b', 'LineWidth', 2)
+plot(x19, y19, 'g', 'LineWidth', 2)
+xlim([0 3])
+ylabel('channel depth (mm)')
+xlabel('radial distance from channel entrance (m)') 
+legend('control mean', 'treatment mean', 'control stdev', 'treatment stdev')
+%set(gcf, 'PaperUnits', 'inches');
+%y_width=7.25;x_width=9.125;
+%set(gcf, 'PaperPosition', [0 0 x_width y_width]);
+%saveas(fig, '../figures/esurf_Figure3a.pdf')
+
+
 %% Plot the data: Figure 3c
 % create arrays
-chan_array18 = [0:0.1:3; maxwidth18; maxwidth_std18];
+width18 = mean(maxwidth18,2, 'omitnan');
+stdev18 = std(maxwidth18,[],2, 'omitnan');
+chan_array18 = [dist; width18'; stdev18'];
 cols = any(isnan(chan_array18),1);
 chan_array18(:,cols) = [];
 
-chan_array19 = [0:0.1:3; maxwidth19; maxwidth_std19];
+width19 = mean(maxwidth19,2, 'omitnan');
+stdev19 = std(maxwidth19,[],2, 'omitnan');
+chan_array19 = [dist; width19'; stdev19'];
 cols = any(isnan(chan_array19),1);
 chan_array19(:,cols) = [];
 
@@ -409,8 +432,8 @@ plot(x19, y19, 'g-', 'LineWidth', 2)
 ylabel('max channel width (cm)')
 ylim([-0.4 18])
 yyaxis right
-plot(0:0.1:3, n_chan18, 'bx')
-plot(0:0.1:3, n_chan19, 'gx')
+plot(0:0.1:3, mean(n_chan18,2,'omitnan'), 'bx')
+plot(0:0.1:3, mean(n_chan19,2,'omitnan'), 'gx')
 ylim([-0.1 4])
 ylabel('number of channels')
 xlabel('distance from apex (m)') 
@@ -471,6 +494,11 @@ for i = (nt_19-1):-1:1 %I know 280 has a channel map, so I can start at 279 and 
 end
 
 %% Calculate channel and far-field aggradation
+% Total dz: control
+dZD_18 = diff(ZD_18,1,3); % difference the maps along time dimension (3)
+% Total dz: treatment
+dZD_19 = diff(ZD_19,1,3); % difference the maps along time dimension (3)
+
 % Far field maps (remove channel from topo): control
 FF_18_buffer = ~CM_buffer_18; % inverse of channel buffer
 ZD_18_FF_buffer = FF_18_buffer.*z18; % elevation of far field
@@ -510,20 +538,13 @@ stdev_ff_agg19 = std(dZD_19_FF_buffer(:), 'omitnan')/2; %mm/hr
 % control
 CM_buffer_18 = CM_buffer_18(:,:,1:279); % when you difference the maps, you will have one less time step 
 FF_18_buffer = FF_18_buffer(:,:,1:279); % far field maps
-% initialize empty matrices to fill 
-d_agg_18 = []; % difference in mean aggradation between channel and ff
-d_agg_std18 = []; % propagated error
-infill_18 = []; % channel infilling time
-infill_std_18 = []; % channel infilling time
-chan_agg_mean_18 = []; % mean channel aggradation rate
-chan_agg_std_18 = []; % standard deviation channel aggradation rate
-ff_agg_mean_18 = []; % far-field aggradation rate
-ff_agg_std_18 = []; % standard deviation far-field aggradation rate
-Hc_18 = []; % mean channel depth 
-Hc_std18 = [];% standard deviation channel depth
-Tc_18 = [];% mean compensation timescale 
-Tc_std_18 = [];% standard deviation compensation timescale
 
+% initialize empty matrices to fill 
+agg18 = NaN(31, 279);
+c_agg18 = NaN(31,279); % channel aggradation rate for distance through time
+ff_agg18 = NaN(31,279); % far-field aggradation rate for distance through time
+d_agg18 = NaN(31,279); % difference in mean aggradation between channel and ff for distance through time
+dist = 0:100:3100; % distance we will calculate for (from 0 to 3100 mm, by 10 mm or 0.01 m).. we could change this if we want finer grained information
 % loop through radial distances 
 for k = 1:(length(dist)-1) % loop to run through different radial distances from the end of the entrance channel.
     % section to find x,y nodes for radial transect and generate matrix of
@@ -531,91 +552,164 @@ for k = 1:(length(dist)-1) % loop to run through different radial distances from
     idx = dd18(dd18 >= dist(k) & dd18 < dist(k+1));
     radial_dd = dd18 >= dist(k) & dd18 < dist(k+1); % can look at this using imagesc(radial_dd) to visualize a 0.1 m radial transect
     % initialize empty matrices 
-    c_agg18 = []; 
-    f_agg18 = [];
     for i = 1:(size(CM_18,3)-1)
+        % dz
+        dz = dZD_18(:,:,i).*radial_dd;
+        dz(dz == 0.) = NaN; % remove data outside radial transect
         % channel and ff data in radial transect
         dz_chan = dZD_18_chan_buffer(:,:,i).*radial_dd; % multiply by radial transect
         dz_chan(dz_chan == 0.) = NaN; %remove channel pixels not in radial_dd
         dz_ff = dZD_18_FF_buffer(:,:,i).*radial_dd; % multiply by radial transect
         dz_ff(dz_ff == 0.) = NaN; % remove ff pixels not in radial_dd
-        % now we will calculate channel aggradation vs. far field
-        % aggradation
-        dz_tmp = dz_chan(~isnan(dz_chan(:)));
-        c_agg18 = [c_agg18;dz_tmp]; % mm/2-hr
-        dz_tmp = dz_ff(~isnan(dz_ff(:)));
-        f_agg18 = [f_agg18;dz_tmp]; % mm/2-hr 
+        % now we will calculate aggradation rates
+        % total aggradation
+        dz_t = dz(~isnan(dz(:)));
+        if isempty(dz_t)
+            agg18(k,i) = NaN;
+        else
+            agg18(k,i) = mean(dz_t/2, 'omitnan'); % mm/hr
+        end
+        % channel aggradation
+        dz_c = dz_chan(~isnan(dz_chan(:)));
+        if isempty(dz_c)
+            c_agg18(k,i) = NaN;
+        else 
+            c_agg18(k,i) = mean(dz_c/2, 'omitnan'); % mm/hr
+        end
+        % far-field aggradation
+        dz_ff = dz_ff(~isnan(dz_ff(:)));
+        if isempty(dz_ff)
+            ff_agg18(k,i) = NaN;
+        else
+            ff_agg18(k,i) = mean(dz_ff/2, 'omitnan'); % mm/hr
+        end
+        % difference in agg between channel and ff
+        if isempty(dz_c) || isempty(dz_ff)
+            d_agg18(k,i) = NaN;
+        else
+            d_agg18(k,i) = mean(dz_c/2, 'omitnan') - mean(dz_ff/2, 'omitnan'); % mm/hr
+        end
     end
-    %difference in agg between channel and ff
-    dagg = (mean(c_agg18) - mean(f_agg18))/2; % mm/hr
-    dagg_std = sqrt((std(c_agg18)^2)+(std(f_agg18)^2)/2); % error propagation
-    % channel infilling time
-    infill = depth18(k)/(dagg); % mm/mm/hr = hrs
-    infill_std = infill*(sqrt((dagg_std/dagg)^2+(depth_std18(k)/depth18(k))^2)); % error propagation
-    
-    % save data
-    chan_agg_mean_18(:,k) = mean(c_agg18, 'omitnan'); % mm/2-hr
-    chan_agg_std_18(:,k) = std(c_agg18, 'omitnan'); % mm/2-hr
-    ff_agg_mean_18(:,k) = mean(f_agg18, 'omitnan'); % mm/2-hr
-    ff_agg_std_18(:,k) = std(f_agg18, 'omitnan'); % mm/2-hr
-    d_agg_18(:,k) = dagg; % mm/hr
-    d_agg_std18(:,k) = dagg_std; % mm/hr
-    infill_18(:,k) = infill; % hours
-    infill_std_18(:,k) = infill_std; % hours 
 end 
 
 % treatment
 CM_buffer_19 = CM_buffer_19(:,:,1:279); % when you difference the maps, you will have one less time step 
 FF_19_buffer = FF_19_buffer(:,:,1:279); % far field maps
-% initialize empty matrices to fill 
-chan_agg_mean_19 = []; % mean channel aggradation
-chan_agg_std_19 = []; % channel aggradation standard deviation
-ff_agg_mean_19 = []; % mean far field aggradation
-ff_agg_std_19 = []; % far field aggradation standard deviation
-d_agg_19 = []; % difference in mean aggradation between channel and ff
-d_agg_std19 = []; % propagated error
-infill_19 = []; % channel infilling time
-infill_std_19 = []; % channel infilling time
+
+% initialize empty matrices to fill  
+agg19 = NaN(31, 279);
+c_agg19 = NaN(31,279); % channel aggradation rate for distance through time
+ff_agg19 = NaN(31,279); % far-field aggradation rate for distance through time
+d_agg19 = NaN(31,279); % difference in mean aggradation between channel and ff for distance through time
 % loop through radial distances 
 for k = 1:(length(dist)-1) % loop to run through different radial distances from the end of the entrance channel.
     % section to find x,y nodes for radial transect and generate matrix of
     % cross section topo and channel (yes/no) data
     idx = dd19(dd19 >= dist(k) & dd19 < dist(k+1));
     radial_dd = dd19 >= dist(k) & dd19 < dist(k+1); % can look at this using imagesc(radial_dd) to visualize a 0.1 m radial transect
-    % initialize empty matrices 
-    c_agg19 = []; 
-    f_agg19 = [];
     for i = 1:(size(CM_19,3)-1)
+        % dz
+        dz = dZD_19(:,:,i).*radial_dd;
+        dz(dz == 0.) = NaN; % remove data outside radial transect
         % channel and ff data in radial transect
         dz_chan = dZD_19_chan_buffer(:,:,i).*radial_dd; % multiply by radial transect
         dz_chan(dz_chan == 0.) = NaN; %remove channel pixels not in radial_dd
         dz_ff = dZD_19_FF_buffer(:,:,i).*radial_dd; % multiply by radial transect
         dz_ff(dz_ff == 0.) = NaN; % remove ff pixels not in radial_dd
-        % now we will calculate channel aggradation vs. far field
-        % aggradation
-        dz_tmp = dz_chan(~isnan(dz_chan(:)));
-        c_agg19 = [c_agg19;dz_tmp]; % mm/2-hr
-        dz_tmp = dz_ff(~isnan(dz_ff(:)));
-        f_agg19 = [f_agg19;dz_tmp]; % mm/2-hr 
-    end
-    %difference in agg between channel and ff
-    dagg = (mean(c_agg19) - mean(f_agg19))/2; % mm/hr
-    dagg_std = sqrt((std(c_agg19)^2)+(std(f_agg19)^2)/2); % error propagation
-    % channel infilling time
-    infill = depth19(k)/(dagg); % mm/mm/hr = hrs
-    infill_std = infill*(sqrt((dagg_std/dagg)^2+(depth_std19(k)/depth19(k))^2)); % error propagation
-    
-    % save data
-    chan_agg_mean_19(:,k) = mean(c_agg19, 'omitnan'); % mm/2-hr
-    chan_agg_std_19(:,k) = std(c_agg19, 'omitnan'); % mm/2-hr
-    ff_agg_mean_19(:,k) = mean(f_agg19, 'omitnan'); % mm/2-hr
-    ff_agg_std_19(:,k) = std(f_agg19, 'omitnan'); % mm/2-hr
-    d_agg_19(:,k) = dagg; % mm/hr
-    d_agg_std19(:,k) = dagg_std; % mm/hr
-    infill_19(:,k) = infill; % hours
-    infill_std_19(:,k) = infill_std; % hours 
+        % now we will calculate aggradation rates
+        % total aggradation
+        dz_t = dz(~isnan(dz(:)));
+        if isempty(dz_t)
+            agg19(k,i) = NaN;
+        else
+            agg19(k,i) = mean(dz_t/2, 'omitnan'); % mm/hr
+        end
+        % channel aggradation
+        dz_c = dz_chan(~isnan(dz_chan(:)));
+        if isempty(dz_c)
+            c_agg19(k,i) = NaN;
+        else 
+            c_agg19(k,i) = mean(dz_c/2, 'omitnan'); % mm/hr
+        end
+        % far-field aggradation
+        dz_ff = dz_ff(~isnan(dz_ff(:)));
+        if isempty(dz_ff)
+            ff_agg19(k,i) = NaN;
+        else
+            ff_agg19(k,i) = mean(dz_ff/2, 'omitnan'); % mm/hr
+        end
+        % difference in agg between channel and ff
+        if isempty(dz_c) || isempty(dz_ff)
+            d_agg19(k,i) = NaN;
+        else
+            d_agg19(k,i) = mean(dz_c/2, 'omitnan') - mean(dz_ff/2, 'omitnan'); % mm/hr
+        end
+    end 
 end 
 
+%% Calculate compensation timescale and channel in-filling rate
+hc = Hc_18(:,1:279);
+hc18 = mean(hc,2, 'omitnan');
+agg18_tmp = mean(agg18,2, 'omitnan');
+dagg18 = mean(d_agg18,2, 'omitnan');
+tc18 = hc18./agg18_tmp;
+Tinfill18 = hc18./dagg18;
+
+hc = Hc_19(:,1:279);
+hc19 = mean(hc,2, 'omitnan');
+agg19_tmp = mean(agg19,2, 'omitnan');
+dagg19 = mean(d_agg19,2, 'omitnan');
+tc19 = hc19./agg19_tmp;
+Tinfill19 = hc19./dagg19;
+% control
+
+% dagg_std = sqrt((std(c_agg18)^2)+(std(f_agg18)^2)/2); % error propagation
+% channel infilling time
+infill = depth18(k)/(dagg); % mm/mm/hr = hrs
+infill_std = infill*(sqrt((dagg_std/dagg)^2+(depth_std18(k)/depth18(k))^2)); % error propagation
+
+%% Plot the data: Figure 3c
+% create arrays
+dist = 0:0.1:3;
+tc18 = mean(Tc_18,2, 'omitnan');
+stdev18 = std(Tc_18,[],2, 'omitnan');
+chan_array18 = [dist; tc18'; stdev18'];
+cols = any(isnan(chan_array18),1);
+chan_array18(:,cols) = [];
+
+tc19 = mean(Tc_19,2, 'omitnan');
+stdev19 = std(Tc_19,[],2, 'omitnan');
+chan_array19 = [dist; tc19'; stdev19'];
+cols = any(isnan(chan_array19),1);
+chan_array19(:,cols) = [];
+
+%fill standard deviation
+y18 = chan_array18(2,:); % your mean vector;
+x18 = chan_array18(1,:);
+std18 = chan_array18(3,:);
+curve1_18 = y18 + std18;
+curve2_18 = y18 - std18;
+
+y19 = chan_array19(2,:); % your mean vector;
+x19 = chan_array19(1,:);
+std19 = chan_array19(3,:);
+curve1_19 = y19 + std19;
+curve2_19 = y19 - std19;
+
+% make figure
+fig2 = figure();
+patch([x18 fliplr(x18)], [curve1_18 fliplr(curve2_18)], 'b')
+hold on
+patch([x19 fliplr(x19)], [curve1_19 fliplr(curve2_19)], 'g')
+alpha(0.15)
+plot(x18, y18, 'b-', 'LineWidth', 2)
+plot(x19, y19, 'g-', 'LineWidth', 2)
+ylabel('compensation timescale (hrs)')
+legend('control mean', 'treatment mean', 'control stdev', 'treatment stdev')
+set(gcf, 'PaperUnits', 'inches');
+y_width=7.25;x_width=9.125;
+set(gcf, 'PaperPosition', [0 0 x_width y_width]);
+saveas(fig2, '../figures/esurf_Figure3c.pdf')
 %% Plot the data: Figure 5
 % error bars for plotting
 % channel aggradation
