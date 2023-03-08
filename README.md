@@ -19,7 +19,7 @@ The repository contains three folders:
  
 Please clone the repository in full in order to use the repo. Then download the .mat files from FIGSHARE REPO and put into the data folder. All figure outputs will populate within the figures folder. Note: some figures were modified in Illustrator for visual purposes.
 
-## Data: TDWB_19_2_Channels\data
+## Data: TDWB_19_2_Channels/data
 Please download the following files from FIGSHRE REPO and put into this folder. 
 
 1. ZD_18.mat - A matrix of size 796x522x560, where 560 is time. Each timestep contains a elevation data collected from the control experiment via LiDAR and post-processed into a 5mmx5mm grid. The data has 796 rows and 522 columns corresponding to basin location.
@@ -46,45 +46,29 @@ Please download the following files from FIGSHRE REPO and put into this folder.
 1. flowfraction.m - This script calculates total, channel, and overbank flow area and fraction for both the control and treatment experiments for the terrestrial delta. 
    * This sciript produces Figure 2 and some results from Table 1. 
    * Data needed: ZD_18.mat, CM_18.mat, flowscreen18.mat, ZD_19.mat, CM_19.mat, and flowscreen19.mat.
-2. radial_channel_elevation.m - This script calculates the average channel bed elevations relative to sea level as a function of radial distance from the apex for both the control and treatment experiments.
-   * This script produces Figure 3a.
+2. channelproperties.m - This script calculates the average channel bed elevations relative to sea level, channel depth, channel width, channel aggradation, far-field aggradation, and channel in-filling rate as a function of radial distance from the apex for both the control and treatment experiments.
+   * This script produces Figures 3a, 3c, 5, and some results from Table 1.
    * Data needed: ZD_18.mat, CM_18.mat, ZD_19.mat, and CM_19.mat.
-3. channel_length.m - This script calculates the channel length for the control and treatment experiments through time.
+3. channellength.m - This script calculates the channel length for the control and treatment experiments through time.
    * This script produces Figure 3b and some results from Table 1.
    * Data needed: CM_18.mat and CM_19.mat
-4. channel_width_agg_infill.m - This script calculates the maximum channel width, number of channels, channel aggradation rate, far-field aggradation rate, and channel in-filling rate as a function radial distances from the apex for both the control and treatment experiments.
-   * This script produces Figures 3c, 5b, and 5c and some results from Figure 1.
-   * Data needed: ZD_18.mat, CM_18.mat, ZD_19.mat, and CM_19.mat.
-5. backwater.m - This script calculates the backwater length for the control and treatment experiments through time. See manuscript for more details.
+4. backwater.m - This script calculates the backwater length for the control and treatment experiments through time. See manuscript for more details.
    * This script produces Figure 4 and some results in Table 1.
    * Data needed: ZD_18.mat, CM_18.mat, ZD_19.mat, and CM_19.mat.
-6. channel_depth.m - This script calculates the channel depth, aggradation, and compensation timescale as a function of radial distance from the apex.
-   * This script produces some results in Table 1.
-   * Data needed: ZD_18.mat, CM_18.mat, ZD_19.mat, and CM_19.mat.
-7. aggradation.m - This script calculates the mean channel and far-field aggradation rate for the delta area >= -9 mm relative to sea level and as a function of distance from the apex. It also calulates a mean channel in-filling rate for the delta, which relies on channel depth from previous script (channel_depth.m).
-   * This script produces Figure 5a and some results in Table 1.
-   * Data needed: ZD_18.mat, CM_18.mat, ZD_19.mat, and CM_19.mat.
-   * Note: this script relies on mean channel depth and standard deviation
-8. lateral_mobility.m - This script calculates lateral channel mobility, fraction of the delta that is unmodified, and channelization statistics. 
-   * This script produces Figure 6 and SI Figures B1, B7, and B8, as well as some results in Table 1.
+5. lateral_mobility.m - This script calculates lateral channel mobility, fraction of the delta that is unmodified, and channelization statistics. 
+   * This script produces Figure 6 and SI Figures B1, B5, and B6, as well as some results in Table 1.
    * Data needed: ZD_18.mat, CM_18.mat, ZD_19.mat, and CM_19.mat.
   
 ## Supplementary Script Files: TDWB_19_2_Channels/code
- 1. SI_planform_overlap.m - This script calculates the channel decorrelation metric based on Wickert et al.(2013).
+ 1. planformoverlap.m - This script calculates the channel decorrelation metric based on Wickert et al.(2013).
    * This script produces SI Figure B4.
    * Data needed: ZD_18.mat, CM_18.mat, ZD_19.mat, and CM_19.mat.
- 2. SI_planform_overlap_allflow.m - This script calculates the decorrelation metric for all flow on the terrestrial delta based on Wickert et al. (2013).
-   * This script produces SI Figure B5.
-   * Data needed: ZD_18.mat, flowscreen18.mat, ZD_19.mat, and flowscreen19.mat.
- 3. SI_planform_overlap_overbank.m - This script calculates the decorrelation metric for the overbank flow on the terrestrail delta based on Wickert et al. (2013).
-   * This script produces SI Figure B6.
-   * Data needed: ZD_18.mat, CM_18.mat, flowscreen18.mat, ZD_19.mat, CM_19.mat, and flowscreen19.mat.
- 4. SI_efold_visitation.m - This script creates the time it takes for the channels to visit one e-fold (66% for control and 67% for treatment) of the terrestrial delta top as a function of time.
-   * This script produces SI Figure B9.
+ 2. efoldmobility.m - This script creates the time it takes for the channels to visit one e-fold (66% for control and 67% for treatment) of the terrestrial delta top as a function of time.
+   * This script produces SI Figure B7.
    * Data needed: ZD_18.mat, CM_18.mat, ZD_19.mat, and CM_19.mat. 
 
-## Figures
-The figures will be created when the scripts are run. Currently there is only a README.txt files in this folder as a place holder. 
+## Figures: TDWB_19_2_Channels/figures
+The figures will be created when the scripts are run. Currently there is only a README.txt files in this folder as a place holder. Note that some figures were modified in Illustrator for publication.
 
 ## Using this repository
 Clone the repository. The scripts can be run in any order, but please note that the data (.mat files) need to be downloaded from FIGSHRE REPOSITORY and placed in the data folder first.

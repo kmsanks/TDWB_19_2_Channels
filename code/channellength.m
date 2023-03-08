@@ -9,7 +9,7 @@ clear all; close all
 cd '../' %We should have opened this code from 'C:\Users\XXXXXXX\Documents\GitHub\TDWB_19_2_Channels\code'
 
 %% Load data
-cd '..\data'
+cd '.\data'
 load('CM_18.mat');
 load('CM_19.mat');
 cd '..\code'

@@ -1,6 +1,6 @@
 clear all; close all
 %% The purpose of this script is to calculate hydrodynamic backwater length (Lb)
-% These data are plotted in Figure 3 in Sanks et al.
+% These data are plotted in Figure 4 and Table 1 in Sanks et al.
 % (2023) submitted to Earth Surface Dynamics
 
 % We will use both LiDAR data and channel maps for the below calculation
@@ -182,7 +182,7 @@ for i = 1:size(CM_19,3) %loop through every hour
         idx = dd19(dd19 >= dist(k) & dd19 < dist(k+1)); %10 mm radial transect of interest
         radial_dd = dd19 >= dist(k) & dd19 < dist(k+1); %pixels in transect that are in the channel
         is_shot = CM_19(:,:,i).*radial_dd; %pixels in transect that are in the channel
-        [row col] = find(~isnan(is_shot)); %find time steps where there is no channel map
+        [row, col] = find(~isnan(is_shot)); %find time steps where there is no channel map
         if isempty(row) %if no channel map, fill array with NaN 
             backwater_elev19(i) = NaN; 
             backwater_point19(i) = NaN;
@@ -299,4 +299,4 @@ legend('control', 'treatment', 'control mean', 'treatment mean', 'no channel map
 set(gca,'XMinorTick','on','YMinorTick','on')
 y_width=7.25;x_width=9.125
 set(gcf, 'PaperPosition', [0 0 x_width y_width]);
-saveas(fig1, '../figures/esurf_Figure3.pdf')
+saveas(fig1, '../figures/esurf_Figure4.pdf')

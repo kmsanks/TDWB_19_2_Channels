@@ -257,8 +257,3 @@ x_width=7.25;
 y_width=9.125;
 set(gcf, 'PaperPosition', [0 0 x_width y_width]);
 saveas(gcf,'../figures/esurf_Figure1.pdf') % this was modified in illustrator for visual purposes
-
-%% Statistical tests
-% is the difference in flow fraction statistically significant?
-[h, p, ci, stats] = ttest2(flowfrac18, flowfrac19)
-[h_un, p_un, ci_un, stats_un] = ttest2(flowfrac18, flowfrac19, 'Vartype', 'unequal')
