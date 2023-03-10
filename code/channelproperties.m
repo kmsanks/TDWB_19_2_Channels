@@ -141,8 +141,8 @@ tmp2 = z.*tmp; % temporary matrix of basin; everything in basin = 0; everything 
 tmp2(tmp2 == 0.) = 1; % turn data inside basin into a 1
 dd19 = dd19.*tmp2; % multiply data by distance to get a matrix with distance to each pixel (mm) for everything in the basin (except the well)
 
-%% Extract channel topo
-% Make elevation screen, so flow can be clipped to the areas above sea level
+%% Elevation relative to sea level
+
 % control
 zrsl18 = [];
 for i= 1:nt_18
@@ -180,7 +180,10 @@ stdelev18 = NaN(length(rad_dist),1); % standard deviation of channel bed elevati
 
 % loop through radial distances 
 for k = 1:(length(rad_dist)-1) % loop to run through different radial distances from the apex.
-    k
+    % print which radial transect the loop is on
+    caption = sprintf('Radial segment %d', k);
+    caption2 = sprintf(' of %d', length(rad_dist)-1);
+    fprintf('%s\n', strcat(caption,caption2))
     % section to find x,y nodes for radial transect and generate matrix of
     % cross section topo and channel (yes/no) data
     idx = dd18(dd18 >= rad_dist(k) & dd18 < rad_dist(k+1));
@@ -191,8 +194,8 @@ for k = 1:(length(rad_dist)-1) % loop to run through different radial distances 
     for i = 1:size(CM_18,3) % loop through all timesteps
         area = terr_area18(:,:,i);
         is_shot = CM_18(:,:,i).*radial_dd.*area; % in channel or no? on delta >-9 mm or no?
-        is_chan = is_shot;
-        is_shot(is_shot == 0) = NaN;
+        is_chan = is_shot; % need 0s and 1s for bwlabel
+        is_shot(is_shot == 0) = NaN; % need NaNs for z_rsl
         z_rsl = zrsl18(:,:,i).*is_shot; % elevation of channel relative to sea level in radial transect
         [label,n] = bwlabel(is_chan); % label gives a unique number to each individual segement recognized; n is number of channels (or segments)
         rad = area.*radial_dd; % radial transect
@@ -200,6 +203,7 @@ for k = 1:(length(rad_dist)-1) % loop to run through different radial distances 
         % save total channel area for each distance through time
         ca = [];
         width = [];
+        % loop through channel segments
         for j = 1:n
             % binary channel segments
             tmp = label;
@@ -262,7 +266,11 @@ meanelev19 = NaN(length(rad_dist),1); % mean channel bed elevation relative to s
 stdelev19 = NaN(length(rad_dist),1); % standard deviation of channel bed elevation relative to sea level
 % run loop
 for k = 1:(length(rad_dist)-1)%loop to run through different radial distances from the end of the apex.
-    k
+    % print which radial segment the loop is on
+    caption = sprintf('Radial segment %d', k);
+    caption2 = sprintf(' of %d', length(rad_dist)-1);
+    fprintf('%s\n', strcat(caption,caption2))
+
     %section to find x,y nodes for radial transect and generate matrix of
     %cross section topo and channel (yes/no) data
     idx = dd19(dd19 >= rad_dist(k) & dd19 < rad_dist(k+1));
@@ -273,14 +281,16 @@ for k = 1:(length(rad_dist)-1)%loop to run through different radial distances fr
     for i = 1:size(CM_19,3) % loop through all timesteps
         area = terr_area19(:,:,i);
         is_shot = CM_19(:,:,i).*radial_dd.*area; % in channel or no? on delta >-9 mm or no?
-        is_chan = is_shot;
+        is_chan = is_shot; % need 0s and 1s for bwlabel
+
+        % is there a channel map?
         if sum(is_shot(:), 'omitnan') == 0 % do not calculate channel properties for timesteps with no channel map
             area19(k,i) = NaN;
             chanfrac19(k,i) = NaN;
             width19(k,i) = NaN;
+
         else % calculate channel properties
-            
-            is_shot(is_shot == 0) = NaN;
+            is_shot(is_shot == 0) = NaN; % need NaNs for z_rsl
             z_rsl = zrsl19(:,:,i).*is_shot; % elevation of channel relative to sea level in radial transect
             [label,n] = bwlabel(is_chan); % label gives a unique number to each individual segement recognized; n is number of channels (or segments)
             rad = area.*radial_dd; % radial transect
@@ -502,42 +512,80 @@ set(gcf, 'PaperPosition', [0 0 x_width y_width]);
 saveas(fig, '../figures/esurf_Figure3c.pdf')
 
 %% Now we will calculate channel in-filling and compensation
-% reload treatment channel maps?
+% crop channel maps
 
 % Process the elevation data to remove extranneous values
 % control
 nt_18 = size(CM_18, 3);
-z18 = []; %go by 2 here so no saddler effects when comparing 18 and 19
-for i = 1:nt_18
-    z = ZD_18(:,:,i);
-    z_rsl = z - (baselevel_rr*i*dt_18+ocean_zero);
-    z_rsl(z_rsl<0) = NaN;
-    z18(:,:,i) = z_rsl + (baselevel_rr*i*dt_18+ocean_zero);
-end 
+z18 = [];
+for i= 1:nt_18
+    %What is sea level at time i
+    sl = ((i-1)*baselevel_rr)+ocean_zero; %first wet scan starts at hour 1
+    elevationmask = ZD_18(:,:,i); 
+    elevationmask(elevationmask == 0) = NaN;
+    elevationmask_rslr = elevationmask - sl;
+    elevationmask_rslr(elevationmask_rslr < 0) = NaN;
+    z18(:,:,i) = elevationmask_rslr;
+end
 
 % treatment
+nt_19 = size(CM_19, 3);
 z19 = [];
-for i = 1:nt_19
-    z = ZD_19(:,:,i);
-    z_rsl = z - (baselevel_rr*(i-1)*dt_19+ocean_zero); %subtract 1 from i since hour 1 here is technically hour 2
-    z_rsl(z_rsl<0) = NaN;
-    z19(:,:,i) = z_rsl + (baselevel_rr*(i-1)*dt_19+ocean_zero);
-end 
+for i= 1:nt_19
+    %What is sea level at time i
+    sl = ((i-1)*baselevel_rr)+ocean_zero; %first scan is t = 2, which is hour 1
+    elevationmask = ZD_19(:,:,i); 
+    elevationmask(elevationmask == 0) = NaN;
+    elevationmask_rslr = elevationmask - sl;
+    elevationmask_rslr(elevationmask_rslr < 0) = NaN;
+    z19(:,:,i) = elevationmask_rslr;
+end
 
 %% Lets buffer the channels so levee sedimentation is included in channel aggradation 
-se = strel('square',10); %create a square of 10 pixels around each 1 (channel) pixel, this will buffer our channel maps
+se = strel('square',4); %create a square of 4 pixels (2 cm) around each 1 (channel) pixel, this will buffer our channel maps to ensure we get levee crests
 % control
 CM_buffer_18 = [];
 for j = 1:nt_18 %go by 2 so no saddler effects here
     buffer = imdilate(CM_18(:,:,j), se); %buffer channel map by 10 pixels
     CM_buffer_18(:,:,j) = buffer;
 end 
+FF_18_buffer = ~CM_buffer_18; % inverse of channel buffer
+FF_18_buffer = double(FF_18_buffer); % convert to double
+CM_buffer_18(CM_buffer_18==0)=NaN; % turn outside channel to NaN
+FF_18_buffer(FF_18_buffer==0)=NaN; % turn channels to NaN
+
 % treatment
 CM_buffer_19 = [];
 for j = 1:nt_19
     buffer = imdilate(CM_19(:,:,j), se);
     CM_buffer_19(:,:,j) = buffer;
 end 
+FF_19_buffer = ~CM_buffer_19; % inverse of channel buffer
+FF_19_buffer = double(FF_19_buffer); % convert to double
+CM_buffer_19(CM_buffer_19==0)=NaN; % turn outside channel to NaN
+FF_19_buffer(FF_19_buffer==0)=NaN; % turn channels to NaN
+
+%% Buffer for channel depths
+CM_depth_18 = [];
+for j = 1:nt_18 %go by 2 so no saddler effects here
+    buffer = imdilate(CM_18(:,:,j), se); %buffer channel map by 10 pixels
+    CM_depth_18(:,:,j) = buffer;
+end 
+
+% treatment
+CM_depth_19 = [];
+for j = 1:nt_19
+    buffer = imdilate(CM_19(:,:,j), se);
+    CM_depth_19(:,:,j) = buffer;
+end 
+
+% treatment
+% replace channel maps for treatment with NaN if time step does not have one
+for i = 1:size(CM_depth_19,3) 
+    if sum(sum(CM_depth_19(:,:,i), 'omitnan'), 'omitnan') == 0
+        CM_depth_19(:,:,i) = NaN;
+    end
+end
 
 %% Clean treatment data
 % Replace timesteps with no channel maps with the channel map from the
@@ -552,46 +600,41 @@ end
 % Total dz: control
 dZD_18 = diff(ZD_18,1,3); % difference the maps along time dimension (3)
 dZD_18(dZD_18 > 25) = NaN; % remove extraneous aggradation values
-dZD_18(dZD_18 < -25) = NaN; % remove extraneous erosion values
+dZD_18(dZD_18 < -10) = NaN; % remove extraneous erosion values
 % Total dz: treatment
 dZD_19 = diff(ZD_19,1,3); % difference the maps along time dimension (3)
 dZD_19(dZD_19 > 25) = NaN; % remove extraneous aggradation values
-dZD_19(dZD_19 < -25) = NaN; % remove extraneous erosion values
+dZD_19(dZD_19 < -10) = NaN; % remove extraneous erosion values
+
+% When you difference the maps there is one less timestep
+CM_buffer_18 = CM_buffer_18(:,:,1:279); 
+FF_18_buffer = FF_18_buffer(:,:,1:279);  
+CM_buffer_19 = CM_buffer_19(:,:,1:279);  
+FF_19_buffer = FF_19_buffer(:,:,1:279);  
+area18 = terr_area18(:,:,1:279);
+area18(area18==0)=NaN;
+area19 = terr_area19(:,:,1:279);
+area19(area19==0)=NaN;
 
 % Far field maps (remove channel from topo): control
-FF_18_buffer = ~CM_buffer_18; % inverse of channel buffer
-ZD_18_FF_buffer = FF_18_buffer.*z18; % elevation of far field
-ZD_18_FF_buffer(ZD_18_FF_buffer == 0) = NaN; % turn channel area into NaN
-dZD_18_FF_buffer = diff(ZD_18_FF_buffer,1,3); % difference the maps along time dimension (3)
+dZD_18_FF_buffer = FF_18_buffer.*dZD_18.*area18; % difference elevation of far field
 
 % Far field maps (remove channel from topo): treatment
-FF_19_buffer = ~CM_buffer_19; % inverse of channel buffer
-ZD_19_FF_buffer = FF_19_buffer.*z19; % elevation of far field
-ZD_19_FF_buffer(ZD_19_FF_buffer == 0) = NaN; % turn channel area into NaN
-dZD_19_FF_buffer = diff(ZD_19_FF_buffer,1,3); % difference the maps along time dimension (3)
+dZD_19_FF_buffer = FF_19_buffer.*dZD_19.*area19; % difference elevation of far field
 
 % Channel maps (remove far field from topo): control
-ZD_18_chan_buffer = CM_buffer_18.*z18; % elevation of channels
-ZD_18_chan_buffer(ZD_18_chan_buffer == 0) = NaN; % remove far field area 
-dZD_18_chan_buffer = diff(ZD_18_chan_buffer,1,3); % difference the maps along time dimension (3)
+dZD_18_chan_buffer = CM_buffer_18.*dZD_18.*area18; % elevation of channels
 
 % Channel maps (remove far field from topo): treatment
-ZD_19_chan_buffer = CM_buffer_19.*z19; % elevation of channels
-ZD_19_chan_buffer(ZD_19_chan_buffer == 0) = NaN; % remove far field area
-dZD_19_chan_buffer = diff(ZD_19_chan_buffer,1,3); % difference the maps along time dimension (3)
+dZD_19_chan_buffer = CM_buffer_19.*dZD_19.*area19; % elevation of channels
 
 % Make sure data is normally distributed
-map = brewermap(4,'Set1'); 
-figure
+figure()
 histogram(dZD_18_chan_buffer(:),'facecolor','blue','facealpha',.5,'edgecolor','none')
 hold on
 histogram(dZD_19_chan_buffer(:),'facecolor','green','facealpha',.5,'edgecolor','none')
 histogram(dZD_18_FF_buffer(:),'facecolor','red','facealpha',.5,'edgecolor','none')
 histogram(dZD_19_FF_buffer(:),'facecolor','black','facealpha',.5,'edgecolor','none')
-xlim([-20 20])
-box off
-axis tight
-legend('cont chan','treat chan','control ff','treatff', 'location','northwest')
 
 
 %% Calculate aggradation statistics for Table 1
@@ -608,12 +651,9 @@ mean_ff_agg19 = median(dZD_19_FF_buffer(:), 'omitnan')/2; %mm/hr
 stdev_ff_agg19 = std(dZD_19_FF_buffer(:), 'omitnan')/2; %mm/hr
 
 %% Calculate aggradation, compensation timescale, and channel in-filling rate
-% control
-CM_buffer_18 = CM_buffer_18(:,:,1:279); % when you difference the maps, you will have one less time step 
-FF_18_buffer = FF_18_buffer(:,:,1:279); % far field maps
 
 % initialize empty matrices to fill 
-rad_dist = 0:50:3100; % each radial transect is 50 mm or 5 cm
+rad_dist = 0:5:3100; % each radial transect is 50 mm or 5 cm
 Hc_18 = NaN(length(rad_dist),nt_18); % channel depth with distance and time to use in aggradation below
 Hc_tot18 = NaN(length(rad_dist),100); % to save percentile channel depth with distance
 Hc_all18 = []; % all channel depths
@@ -623,29 +663,42 @@ ff_agg18 = NaN(length(rad_dist),nt_18-1); % far-field aggradation rate for dista
 d_agg18 = NaN(length(rad_dist),nt_18-1); % difference in mean aggradation between channel and ff for distance through time
 % loop through radial distances 
 for k = 1:(length(rad_dist)-1) % loop to run through different radial distances from the end of the entrance channel.
+    % print which radial segment the loop is on
+    caption = sprintf('Radial segment %d', k);
+    caption2 = sprintf(' of %d', length(rad_dist)-1);
+    fprintf('%s\n', strcat(caption,caption2))
+
     % section to find x,y nodes for radial transect and generate matrix of
     % cross section topo and channel (yes/no) data
     idx = dd18(dd18 >= rad_dist(k) & dd18 < rad_dist(k+1));
     radial_dd = dd18 >= rad_dist(k) & dd18 < rad_dist(k+1); % can look at this using imagesc(radial_dd) to visualize a 0.1 m radial transect
     % initialize empty matrices 
-    for i = 1:(size(CM_18,3)-1)
+    depth = [];
+    for i = 1:(size(CM_buffer_18,3))
         % only want area on the delta top >-9 mm rsl or in the channels 
-        area = terr_area18(:,:,i) + CM_18(:,:,i);
-        area(area>1)=1;
+        CMtmp = CM_buffer_18(:,:,i); % we need tmp channel map
+        CMtmp(isnan(CMtmp))=0; % to turn NaNs back to 0
+        area = terr_area18(:,:,i) + CMtmp; %so we can add to area
+        area(area>1)=1; % channel or >-9mm rsl = 1
+        area(area==0)=NaN; % turn 0s back to NaN
+        
         % dz
-        dz = dZD_18(:,:,i).*radial_dd.*area;
-        dz(dz == 0.) = NaN; % remove data outside radial transect
+        rads = double(radial_dd); % turn into double
+        rads(rads==0)=NaN; % so we can turn 0s to ones
+        dz = dZD_18(:,:,i).*rads.*area; % so we can get dz only in the radius
+        
         % channel and ff data in radial transect
-        dz_chan = dZD_18_chan_buffer(:,:,i).*radial_dd.*area; % multiply by radial transect
-        dz_chan(dz_chan == 0.) = NaN; %remove channel pixels not in radial_dd
-        dz_ff = dZD_18_FF_buffer(:,:,i).*radial_dd.*area; % multiply by radial transect
-        dz_ff(dz_ff == 0.) = NaN; % remove ff pixels not in radial_dd
+        dz_chan = dZD_18_chan_buffer(:,:,i).*rads.*area; % multiply by radial transect 
+        dz_ff = dZD_18_FF_buffer(:,:,i).*rads.*area; % multiply by radial transect
+        
         % elevation data for channel depths
         z = ZD_18(:,:,i); % elevation data for channel depth
-        is_shot = CM_18(:,:,i).*radial_dd;%.*area; % in channel or no?
+        is_shot = CM_depth_18(:,:,i).*rads;%.*area; % in channel or no?
         z = z.*is_shot; % elevation in the channels
-        % individual channel segments
+        
+        % individual channel segments 
         [label,n] = bwlabel(is_shot); % label gives a unique number to each individual segement recognized; n is number of channels (or segments)
+       
         % channel depth
         % we will calculate depth for each channel here
         depthmax = [];
@@ -653,7 +706,7 @@ for k = 1:(length(rad_dist)-1) % loop to run through different radial distances 
             tmp = label;
             tmp(tmp ~= j) = NaN; % remove all data that is not in segement n
             tmp(tmp > 0) = 1; % turn segement data to 1
-            tmp(tmp < 1) = NaN; % make everything else NaN
+            tmp(tmp < 1) = NaN; % make everything else 
             z_tmp = z.*tmp; % segment elevations to get depth
             zs = z_tmp(~isnan(z_tmp)); % remove data not in the channel
             tmp_depth = (max(zs) - min(zs)); % channel depth in mm; we will take the max elevation as levee elevation and min elevation as thalweg                  
@@ -667,9 +720,7 @@ for k = 1:(length(rad_dist)-1) % loop to run through different radial distances 
         else
             Hc_18(k,i) = depthmax;
         end
-        for jj = 1:1:100
-            Hc_tot18(k,jj) = prctile(depth,jj);
-        end
+
         Hc_all18 = [Hc_all18;depth']; % compile all channel depths
         % now we will calculate aggradation rates
         % total aggradation
@@ -700,62 +751,87 @@ for k = 1:(length(rad_dist)-1) % loop to run through different radial distances 
             d_agg18(k,i) = mean(dz_c/2, 'omitnan') - mean(dz_ff/2, 'omitnan'); % mm/hr
         end
     end
+    % save depth percentiles for each radial segment
+    for jj = 1:1:100
+        if isempty(depth)
+            Hc_tot18(k,jj) = NaN;
+        else
+            Hc_tot18(k,jj) = prctile(depth,jj);
+        end
+    end
 end 
 
 % treatment
-CM_buffer_19 = CM_buffer_19(:,:,1:279); % when you difference the maps, you will have one less time step 
-FF_19_buffer = FF_19_buffer(:,:,1:279); % far field maps
-
-% initialize empty matrices to fill  
+% initialize empty matrices to fill 
+rad_dist = 0:5:3100; % each radial transect is 50 mm or 5 cm
 Hc_19 = NaN(length(rad_dist),nt_19); % channel depth with distance and time to use in aggradation below
-Hc_tot19 = NaN(length(rad_dist),100); % to save 95th percentile channel depth with distance
+Hc_tot19 = NaN(length(rad_dist),100); % to save percentile channel depth with distance
+Hc_all19 = []; % all channel depths
 agg19 = NaN(length(rad_dist),nt_19-1); % total aggradation rate for distance through time
 c_agg19 = NaN(length(rad_dist),nt_19-1); % channel aggradation rate for distance through time
 ff_agg19 = NaN(length(rad_dist),nt_19-1); % far-field aggradation rate for distance through time
 d_agg19 = NaN(length(rad_dist),nt_19-1); % difference in mean aggradation between channel and ff for distance through time
 % loop through radial distances 
 for k = 1:(length(rad_dist)-1) % loop to run through different radial distances from the end of the entrance channel.
+    % print which radial segment the loop is on
+    caption = sprintf('Radial segment %d', k);
+    caption2 = sprintf(' of %d', length(rad_dist)-1);
+    fprintf('%s\n', strcat(caption,caption2))
+
     % section to find x,y nodes for radial transect and generate matrix of
     % cross section topo and channel (yes/no) data
     idx = dd19(dd19 >= rad_dist(k) & dd19 < rad_dist(k+1));
     radial_dd = dd19 >= rad_dist(k) & dd19 < rad_dist(k+1); % can look at this using imagesc(radial_dd) to visualize a 0.1 m radial transect
+    % initialize empty matrices 
     depth = [];
-    for i = 1:(size(CM_19,3)-1)
+    for i = 1:(size(CM_buffer_19,3))
+        % only want area on the delta top >-9 mm rsl or in the channels 
+        CMtmp = CM_buffer_19(:,:,i); % we need tmp channel map
+        CMtmp(isnan(CMtmp))=0; % to turn NaNs back to 0
+        area = terr_area19(:,:,i) + CMtmp; %so we can add to area
+        area(area>1)=1; % channel or >-9mm rsl = 1
+        area(area==0)=NaN; % turn 0s back to NaN
+        
+        % dz
+        rads = double(radial_dd); % turn into double
+        rads(rads==0)=NaN; % so we can turn 0s to ones
+        dz = dZD_19(:,:,i).*rads.*area; % so we can get dz only in the radius
+        
+        % channel and ff data in radial transect
+        dz_chan = dZD_19_chan_buffer(:,:,i).*rads.*area; % multiply by radial transect 
+        dz_ff = dZD_19_FF_buffer(:,:,i).*rads.*area; % multiply by radial transect
+        
+        % elevation data for channel depths
         z = ZD_19(:,:,i); % elevation data for channel depth
-        is_shot = CM_19(:,:,i).*radial_dd; % in channel or no?
+        is_shot = CM_depth_19(:,:,i).*rads;%.*area; % in channel or no?
         z = z.*is_shot; % elevation in the channels
-        %calculate channel properties for all other timesteps
-        [label,n] = bwlabel(is_shot);
+        
+        % individual channel segments 
+        [label,n] = bwlabel(is_shot); % label gives a unique number to each individual segement recognized; n is number of channels (or segments)
+       
+        % channel depth
+        % we will calculate depth for each channel here
         depthmax = [];
-        for j = 1:n % loop through all channels
+        for j = 1:n % loop through channel segments
             tmp = label;
             tmp(tmp ~= j) = NaN; % remove all data that is not in segement n
             tmp(tmp > 0) = 1; % turn segement data to 1
-            tmp(tmp < 1) = NaN; % make everything else NaN
+            tmp(tmp < 1) = NaN; % make everything else 
             z_tmp = z.*tmp; % segment elevations to get depth
             zs = z_tmp(~isnan(z_tmp)); % remove data not in the channel
-            tmp_depth = (max(zs) - min(zs)); % channel depth in mm; we will take the max elevation as levee elevation and min elevation as thalweg         
+            tmp_depth = (max(zs) - min(zs)); % channel depth in mm; we will take the max elevation as levee elevation and min elevation as thalweg                  
             depthmax = [depthmax, tmp_depth];
             depth = [depth,tmp_depth]; % to save all channel depths for each radial transect
         end
         depthmax = max(depthmax); % we don't want to average in the non-trunk channels, as they are often a lot shallower
+        % save channel depth for each distance through time
         if isempty(depthmax)
             Hc_19(k,i) = NaN;
         else
             Hc_19(k,i) = depthmax;
         end
-        
-        % only want area on the delta top >-9 mm rsl or in the channels 
-        area = terr_area19(:,:,i) + CM_19(:,:,i);
-        area(area>1)=1;
-        % dz
-        dz = dZD_19(:,:,i).*radial_dd.*area;
-        dz(dz == 0.) = NaN; % remove data outside radial transect
-        % channel and ff data in radial transect
-        dz_chan = dZD_19_chan_buffer(:,:,i).*radial_dd.*area; % multiply by radial transect
-        dz_chan(dz_chan == 0.) = NaN; %remove channel pixels not in radial_dd
-        dz_ff = dZD_19_FF_buffer(:,:,i).*radial_dd.*area; % multiply by radial transect
-        dz_ff(dz_ff == 0.) = NaN; % remove ff pixels not in radial_dd
+
+        Hc_all19 = [Hc_all19;depth']; % compile all channel depths
         % now we will calculate aggradation rates
         % total aggradation
         dz_t = dz(~isnan(dz(:)));
@@ -784,12 +860,20 @@ for k = 1:(length(rad_dist)-1) % loop to run through different radial distances 
         else
             d_agg19(k,i) = mean(dz_c/2, 'omitnan') - mean(dz_ff/2, 'omitnan'); % mm/hr
         end
- 
-        for jj = 1:1:100
+    end
+    % save depth percentiles for each radial segment
+    for jj = 1:1:100
+        if isempty(depth)
+            Hc_tot19(k,jj) = NaN;
+        else
             Hc_tot19(k,jj) = prctile(depth,jj);
         end
-    end 
-end 
+    end
+end
+
+%% Remove outliers from channel depth data if you want
+tmphc18 = rmoutliers(Hc_all18);
+tmphc19 = rmoutliers(Hc_all19);
 
 %% Calculate compensation timescale and channel in-filling rate
 hc = Hc_18(:,1:279);
@@ -809,6 +893,56 @@ Ta_19 = hc19./dagg19;
 % control
 % dagg_std = sqrt((std(c_agg18)^2)+(std(f_agg18)^2)/2); % error propagation
 
+%% Plot channel depth
+rad_dist = rad_dist./1000.;
+h18 = Hc_tot18(:,50);
+iqr25 = Hc_tot18(:,25);
+iqr75 = Hc_tot18(:,75);
+chan_array18 = [rad_dist; h18'; iqr25'; iqr75'];
+cols = any(isnan(chan_array18),1);
+chan_array18(:,cols) = [];
+
+h19 = Hc_tot19(:,50);
+iqr25 = Hc_tot19(:,25);
+iqr75 = Hc_tot19(:,75);
+chan_array19 = [rad_dist; h19'; iqr25'; iqr75'];
+cols = any(isnan(chan_array19),1);
+chan_array19(:,cols) = [];
+
+%fill standard deviation
+y18 = chan_array18(2,:); % your mean vector;
+x18 = chan_array18(1,:);
+iqrlow18 = chan_array18(3,:);
+iqrhigh18 = chan_array18(4,:);
+curve1_18 = y18 + iqrhigh18;
+curve2_18 = y18 - iqrlow18;
+
+y19 = chan_array19(2,:); % your mean vector;
+x19 = chan_array19(1,:);
+iqrlow19 = chan_array19(3,:);
+iqrhigh19 = chan_array19(4,:);
+curve1_19 = y19 + iqrhigh19;
+curve2_19 = y19 - iqrlow19;
+
+% make figure
+fig = figure();
+plot(x18, y18, 'b-', 'LineWidth', 2)
+hold on
+plot(x19, y19, 'g-', 'LineWidth', 2)
+patch([x18 fliplr(x18)], [curve1_18 fliplr(curve2_18)], 'b')
+patch([x19 fliplr(x19)], [curve1_19 fliplr(curve2_19)], 'g')
+alpha(0.15)
+plot(x18, y18, 'b-', 'LineWidth', 2)
+plot(x19, y19, 'g-', 'LineWidth', 2)
+ylabel('channel depth (mm)')
+xlabel('distance from apex (m)') 
+ylim([0 50])
+legend('control median', 'treatment median', 'control 25 - 75th', 'treatment 25 - 75th')
+set(gca, 'YMinorTick', 'On', 'XMinorTick', 'On', 'XAxisLocation', 'bottom', 'XAxisLocation', 'bottom')
+set(gcf, 'PaperUnits', 'inches');
+y_width=7.25;x_width=9.125;
+set(gcf, 'PaperPosition', [0 0 x_width y_width]);
+saveas(fig, '../figures/esurf_Figure3c.pdf')
 
 %% Plot the data: compensation timescale
 % create arrays
@@ -950,8 +1084,8 @@ ff_curve2_19 = ff_y19 - ff_std19;
 
 % difference in agg
 % dd aggradation
-d_agg_mean_18 = mean(dagg18,2, 'omitnan');
-d_agg_std_18 = mean(dagg18,2, 'omitnan');
+d_agg_mean_18 = mean(d_agg18,2, 'omitnan');
+d_agg_std_18 = mean(d_agg18,2, 'omitnan');
 dd_array18 = [0:0.05:3.1; d_agg_mean_18'; d_agg_std_18'];
 cols = any(isnan(dd_array18),1);
 dd_array18(:,cols) = [];

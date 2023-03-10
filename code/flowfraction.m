@@ -49,8 +49,8 @@ ocean_zero = 25; %ocean elevation at beginning of experiment (mm)
 
 % control
 z18 = []; % initialize elevation matrix
-terr_area18 = []; % initialize terrestrial area binary matrix
-for i= 1:nt_18; % loop through all timesteps
+terr_area18g0 = []; % initialize terrestrial area binary matrix
+for i= 1:nt_18 % loop through all timesteps
     %What is sea level at time i
     sl = (i*0.25*dt_18)+25; %first wet scan starts 48 minutes into the hour so i = i is a good approximation
     elevationmask = ZD_18(:,:,i); 
@@ -79,8 +79,8 @@ end
 
 % treatment
 z19 = []; % initialize elevation matrix
-terr_area19 = []; % initialize terrestrial area binary matrix
-for i= 1:nt_19; % loop through all timesteps
+terr_area19g0 = []; % initialize terrestrial area binary matrix
+for i= 1:nt_19 % loop through all timesteps
     %What is sea level at time i
     sl = (i*0.25*dt_19)+25; %first wet scan starts 48 minutes into the hour so i = i is a good approximation
     elevationmask = ZW_19(:,:,i); 
@@ -104,7 +104,7 @@ for i= 1:nt_19; % loop through all timesteps
     C2 = fliplr(C);
     imagesc(b(:,:,1))
     terr = drawpolygon('Position',C2);
-    terr_area19(:,:,i) = createMask(terr);
+    terr_area19g0(:,:,i) = createMask(terr);
 end
 
 %% Calculate the flow (total, channel, and overbank) properties 
