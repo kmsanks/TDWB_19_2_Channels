@@ -446,6 +446,7 @@ plot(x18_lat, y18_lat, 'b', 'LineWidth', 2)
 plot(x19_lat, y19_lat, 'g', 'LineWidth', 2)
 ylim([0 1])
 xlim([0 300])
+axis('square')
 grid on
 grid minor
 ylabel('fraction not visited by channel (-)')
@@ -468,6 +469,7 @@ grid minor
 ylabel('fraction unmodified (-)')
 xlabel('measurment window (hr)') 
 legend('control mean', 'treatment mean', 'control stdev', 'treatment stdev')
+axis('square')
 set(gcf, 'PaperUnits', 'inches');
 y_width=6;x_width=6;
 set(gcf, 'PaperPosition', [0 0 x_width y_width]);
