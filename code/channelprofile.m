@@ -114,7 +114,7 @@ end
 % section to find x,y nodes for radial transect and generate matrix of
 % cross section topo and channel (yes/no) data
 rad_dist = 0:5:3100; % each radial transect is 50 mm or 5 cm
-k = 100; % radial transect 100*5 = 500 mm or 1m from entrance
+k = 200; % radial transect 100*5 = 500 mm or 1m from entrance
 idx = dd18(dd18 >= rad_dist(k) & dd18 < rad_dist(k+1));
 rads = dd18 >= rad_dist(k) & dd18 < rad_dist(k+1); % can look at this using imagesc(radial_dd) to visualize a 0.1 m radial transect% initialize empty matrices 
 rads = rads.*basin18; %only radial on delta
@@ -131,22 +131,26 @@ rads(rads==0)=NaN; % so we can turn 0s to ones
 % find x and y coords
 [y19, x19] = find(~isnan(rads));
 
+% which time do we want to plot
+t18 = 40;
+t19 = 110;
 % Compute elevation values along transect using improfile
-elevation_values18 = improfile(z18(:,:,1), x18, y18);
+elevation_values18 = improfile(z18(:,:,t18), x18, y18);
 radial_dist18 = 0:0.005:(length(elevation_values18)-1)*0.005; %distance along radial transect
 
-elevation_values19 = improfile(z19(:,:,100), x19, y19);
+elevation_values19 = improfile(z19(:,:,t19), x19, y19);
 radial_dist19 = 0:0.005:(length(elevation_values19)-1)*0.005; %distance along radial transect
-
-t18 = 1;
-t19 = 100;
 
 cmap = colormap("parula");
 
+imAlpha=ones(size(z18(:,:,t18)));
+imAlpha(isnan(z18(:,:,t18)))=0;
+imagesc(z18(:,:,t18),'AlphaData',imAlpha);
+set(gca,'color',0*[1 1 1]);
+
 % Add topography data as a contour plot
-figure
-subplot(2,2,1)
-contourf(X18,Y18,z18(:,:,t18),50,'LineStyle','none') % Plot the topography data as a filled contour plot with 50 levels
+fig = figure;
+imagesc(z18(:,:,t18), 'AlphaData', ~isnan(z18(:,:,t18))) % Plot the topography data as a filled contour plot with 50 levels
 axis equal
 xlim([0 500])
 ylim([109 500])
@@ -155,9 +159,15 @@ plot(x18, y18, 'k-', 'LineWidth', 2) % Plot the radial line in black with a dash
 colormap(cmap)
 colorbar
 clim([-9 40]) % Add a colorbar to show the elevation scale
-set(gca, 'YDir','reverse')
-subplot(2,2,2)
-contourf(X19,Y19,z19(:,:,t19),50,'LineStyle','none') % Plot the topography data as a filled contour plot with 50 levels
+legend('radial transect (1e)')
+set(gca, 'XMinorTick', 'On', 'YMinorTick', 'On')
+set(gcf, 'PaperUnits', 'inches');
+y_width=7.25 ;x_width=9.125;
+set(gcf, 'PaperPosition', [0 0 x_width y_width]);
+saveas(gcf,'../figures/esurf_Figure1c.pdf')
+
+fig = figure;
+imagesc(z19(:,:,t19), 'AlphaData', ~isnan(z19(:,:,t19))) % Plot the topography data as a filled contour plot with 50 levels
 axis equal
 xlim([130 630])
 ylim([214 605])
@@ -165,17 +175,36 @@ hold on
 plot(x19, y19, 'k-', 'LineWidth', 2) % Plot the radial line in black with a dashed line style
 colormap(cmap)
 colorbar % Add a colorbar to show the elevation scale
-clim([-9 30])
-set(gca, 'YDir','reverse')
-subplot(2,2,3)
-plot(radial_dist18, elevation_values18, 'b-', 'LineWidth', 2)
+clim([-19 20])
+legend('radial transect (1f)')
+set(gca, 'XMinorTick', 'On', 'YMinorTick', 'On')
+set(gcf, 'PaperUnits', 'inches');
+y_width=7.25 ;x_width=9.125;
+set(gcf, 'PaperPosition', [0 0 x_width y_width]);
+saveas(gcf,'../figures/esurf_Figure1d.pdf')
+
+fig = figure;
+plot(radial_dist18, elevation_values18, 'b-', 'LineWidth', 1)
 xlabel('distance along radial transect (m)')
 ylabel('elevation relative to sea level (mm)')
-ylim([10 30])
+ylim([2 33])
+xlim([0 2.2])
+pbaspect([4 0.5 1])
 set(gca, 'XMinorTick', 'On', 'YMinorTick', 'On')
-subplot(2,2,4)
-plot(radial_dist19, elevation_values19, 'g-', 'LineWidth', 2)
+set(gcf, 'PaperUnits', 'inches');
+y_width=7.25 ;x_width=9.125;
+set(gcf, 'PaperPosition', [0 0 x_width y_width]);
+saveas(gcf,'../figures/esurf_Figure1e.pdf')
+
+fig = figure;
+plot(radial_dist19, elevation_values19, 'g-', 'LineWidth', 1)
 xlabel('distance along radial transect (m)')
-ylim([0 20])
 ylabel('elevation relative to sea level (mm)')
+ylim([-10 25])
+xlim([0 2.2])
+pbaspect([4 0.5 1])
 set(gca, 'XMinorTick', 'On', 'YMinorTick', 'On')
+set(gcf, 'PaperUnits', 'inches');
+y_width=7.25 ;x_width=9.125;
+set(gcf, 'PaperPosition', [0 0 x_width y_width]);
+saveas(gcf,'../figures/esurf_Figure1f.pdf')

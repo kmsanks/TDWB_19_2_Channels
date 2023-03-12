@@ -85,6 +85,6 @@ violinplot(X,G);
 ylabel('channel length (m)');
 ylim([0 3])
 set(gcf, 'PaperUnits', 'inches');
-y_width=7.25 ;x_width=9.125
+y_width=7.25 ;x_width=9.125;
 set(gcf, 'PaperPosition', [0 0 x_width y_width]);
-saveas(gcf,'../figures/esurf_Figure3b.pdf')
+saveas(fig,'../figures/esurf_Figure3b.pdf')
