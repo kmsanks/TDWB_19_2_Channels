@@ -16,12 +16,13 @@ cd './data'
 load('ZD_18.mat'); %topography; elevation data (mm)
 load('CM_18.mat'); %channel maps
 load('flowscreen18.mat'); %area covered by flow
-
+load('terr_area18.mat')
 % treatment
 load('ZD_19.mat'); %this will be used to create a binary for the basin
 load('ZW_19.mat'); %topography; elevation data (mm) from the wet scans 
 load('CM_19.mat'); %channel maps
 load('flowscreen19.mat'); %area covered by flow
+load('terrarea19.mat')
 cd '../code'
 
 %% Set parameters
@@ -132,6 +133,69 @@ for i =1:nt_18
   flowarea18(i) = sum(flowtot(:), 'omitnan')*(2.5*10^-5); %m^2
   deltaarea18(i) = sum(area(:), 'omitnan')*(2.5*10^-5); %m^2
 end
+
+rad_dist = 0:50:3100; % distance we will calculate for (from 0 to 3100 mm, by 50 mm or 5 cm).. we could change this if we want finer grained information
+% initialize empty matrices 
+area18 = NaN(length(rad_dist),nt_18); % total channel area
+chanfrac18 = NaN(length(rad_dist),nt_18); % radial channel fraction 
+width18 = NaN(length(rad_dist),nt_18); % trunk channel width
+n_chan18 = NaN(length(rad_dist),nt_18); % number of channels
+meanelev18 = NaN(length(rad_dist),1); % mean channel bed elevation relative to sea level
+stdelev18 = NaN(length(rad_dist),1); % standard deviation of channel bed elevation relative to sea level
+
+% loop through radial distances 
+for k = 1:(length(rad_dist)-1) % loop to run through different radial distances from the apex.
+    % print which radial transect the loop is on
+    caption = sprintf('Radial segment %d', k);
+    caption2 = sprintf(' of %d', length(rad_dist)-1);
+    fprintf('%s\n', strcat(caption,caption2))
+    % section to find x,y nodes for radial transect and generate matrix of
+    % cross section topo and channel (yes/no) data
+    idx = dd18(dd18 >= rad_dist(k) & dd18 < rad_dist(k+1));
+    radial_dd = dd18 >= rad_dist(k) & dd18 < rad_dist(k+1); % can look at this using imagesc(radial_dd) to visualize a 0.1 m radial transect
+
+    % loop through time
+    for i = 1:size(CM_18,3) % loop through all timesteps
+        area = terr_area18(:,:,i);
+        % channels
+        is_shot = CM_18(:,:,i).*radial_dd.*area; % in channel or no? on delta >-9 mm or no?
+        is_chan = is_shot; % need 0s and 1s for bwlabel
+
+        is_ob = flowscreen18(:,:,i).*radial_dd.*area; % in channel or no? on delta >-9 mm or no?
+        flowtot = flow + chan; %deep parts of channel are sometimes not included in flow
+        flowtot(flowtot>=1) = 1;
+        ob = flowtot-chan; %0 channel or no flow, 1 ob flow, NaN outside basin or not terrestrial
+
+        [label,n] = bwlabel(is_chan); % label gives a unique number to each individual segement recognized; n is number of channels (or segments)
+        rad = area.*radial_dd; % radial transect
+        radial_area = sum(rad(:),'omitnan')*0.25; % area of radial transect in cm^2
+        % save total channel area for each distance through time
+        ca = [];
+        co = [];
+        % loop through channel segments
+        for j = 1:n
+            % binary channel segments
+            tmp = label;
+            tmp(tmp ~= j) = NaN; % remove all data that is not in segement n
+            tmp(tmp > 0) = 1; % turn segement data to 1
+            tmp(tmp < 1) = NaN; % make everything else NaN
+            
+            % channel area
+            carea = sum(tmp(:), 'omitnan')*0.25; % area of channel segment in cm^2
+            ca = [ca,carea]; % save area for each segment
+        end 
+   
+        % save channel area and fraction
+        if isempty(ca)
+           area18(k,i) = NaN;
+           chanfrac18(k,i) = NaN;
+        else
+           area18(k,i) = sum(ca); 
+           chanfrac18(k,i) = sum(ca)/radial_area;
+        end    
+        
+end 
+
 
 % treatment 
 % 1 is flow (and outside basin) and 0 is no flow

@@ -594,7 +594,7 @@ FF_buffer_19(FF_buffer_19==0)=NaN; % turn channels to NaN
 % depth
 % replace channel maps for treatment with NaN if time step does not have one
 for i = 1:size(CM_buffer_19,3) 
-    if sum(sum(CM_buffer_19(:,:,i), 'omitnan'), 'omitnan') == 0
+    if sum(sum(CM_buffer_19(:,:,i), 'omitnan'), 'omitnan') == -Inf
         CM_buffer_19(:,:,i) = NaN;
         FF_buffer_19(:,:,i) = NaN;
         area19(:,:,i) = NaN;
@@ -637,16 +637,6 @@ dZD_18_chan_buffer = CM_buffer_18.*dZD_18.*area18; % elevation of channels
 % Channel maps (remove far field from topo): treatment
 dZD_19_chan_buffer = CM_buffer_19.*dZD_19.*area19; % elevation of channels
 
-% Make sure data is normally distributed (are there outliers?)- yes so
-% above we crop dzd data to something reasonable
-% figure()
-% histogram(dZD_18_chan_buffer(:),'facecolor','blue','facealpha',.5,'edgecolor','none')
-% hold on
-% histogram(dZD_19_chan_buffer(:),'facecolor','green','facealpha',.5,'edgecolor','none')
-% histogram(dZD_18_FF_buffer(:),'facecolor','red','facealpha',.5,'edgecolor','none')
-% histogram(dZD_19_FF_buffer(:),'facecolor','black','facealpha',.5,'edgecolor','none')
-% 
-
 %% Calculate aggradation statistics for Table 1
 mean_chan_agg18 = median(dZD_18_chan_buffer(:), 'omitnan')/2; %mm/hr
 stdev_chan_agg18 = std(dZD_18_chan_buffer(:), 'omitnan')/2; %mm/hr
@@ -664,21 +654,21 @@ stdev_ff_agg19 = std(dZD_19_FF_buffer(:), 'omitnan')/2; %mm/hr
 
 % initialize empty matrices to fill 
 rad_dist = 0:5:3100; % each radial transect is 50 mm or 5 cm
-Hc_18 = NaN(length(rad_dist),nt_18); % channel depth with distance and time to use in aggradation below
+Hc_18 = NaN(length(rad_dist),nt_18-1); % channel depth with distance and time to use in aggradation below
 Hc_tot18 = NaN(length(rad_dist),100); % to save percentile channel depth with distance
 Hc_all18 = []; % all channel depths
-zff_18 = NaN(length(rad_dist),nt_19); % to save mean far-field elevation rsl
-zc_18 = NaN(length(rad_dist),nt_19); % to save channel bed elevation rsl
-zlev_18 = NaN(length(rad_dist),nt_19); % to save levee crest elevation rsl
+zff_18 = NaN(length(rad_dist),nt_19-1); % to save mean far-field elevation rsl
+zc_18 = NaN(length(rad_dist),nt_19-1); % to save channel bed elevation rsl
+zlev_18 = NaN(length(rad_dist),nt_19-1); % to save levee crest elevation rsl
 agg18 = NaN(length(rad_dist),nt_18-1); % total aggradation rate for distance through time
 c_agg18 = NaN(length(rad_dist),nt_18-1); % channel aggradation rate for distance through time
 ff_agg18 = NaN(length(rad_dist),nt_18-1); % far-field aggradation rate for distance through time
 d_agg18 = NaN(length(rad_dist),nt_18-1); % difference in mean aggradation between channel and ff for distance through time
 % loop through radial distances 
-for k = 1:(length(rad_dist)-1) % loop to run through different radial distances from the end of the entrance channel.
+for k = 2:(length(rad_dist)-1) % loop to run through different radial distances from the end of the entrance channel.
     % print which radial segment the loop is on
     caption = sprintf('Radial segment %d', k);
-    caption2 = sprintf(' of %d', length(rad_dist)-1);
+    caption2 = sprintf(' of %d', length(rad_dist)-2);
     fprintf('%s\n', strcat(caption,caption2))
 
     % section to find x,y nodes for radial transect and generate matrix of
@@ -708,17 +698,17 @@ for k = 1:(length(rad_dist)-1) % loop to run through different radial distances 
         z = zrsl18(:,:,i); % elevation data for channel depth
         is_shot = CM_buffer_18(:,:,i).*rads.*area; % in channel or no?
         z = z.*is_shot; % elevation in the channels
-        is_shot(isnan(is_shot)) = 0;
+        is_shot(isnan(is_shot)) = 0; % can't have NaNs in bwlabel
         
         % mean far-field elevation relative to sea level
-        ztmp = zrsl18(:,:,i).*rads.*area.*FF_buffer_18(:,:,i);
-        if isempty(ztmp)
-            zff_19(k,i) = NaN;
+        ztmp = zrsl18(:,:,i).*rads.*area.*FF_buffer_18(:,:,i); % only in terrestrial area > -9mm or in channel
+        if sum(~isnan(ztmp(:)))==0 % if there are no far-field pixels in transect
+            zff_18(k,i) = NaN; % save NaN
         else
-            zff_19(k,i) = mean(ztmp(:), 'omitnan');
+            zff_18(k,i) = mean(ztmp(:), 'omitnan'); % otherwise save mean far-field elevation (mm rsl)
         end
 
-        % individual channel segments 
+        % how many individual channel segments ?
         [label,n] = bwlabel(is_shot); % label gives a unique number to each individual segement recognized; n is number of channels (or segments)
        
         % channel depth
@@ -730,28 +720,35 @@ for k = 1:(length(rad_dist)-1) % loop to run through different radial distances 
             tmp = label;
             tmp(tmp ~= j) = NaN; % remove all data that is not in segement n
             tmp(tmp > 0) = 1; % turn segement data to 1
-            tmp(tmp < 1) = NaN; % make everything else 
+            tmp(tmp < 1) = NaN; % make everything else NaN
             z_tmp = z.*tmp; % segment elevations to get depth
             zs = z_tmp(~isnan(z_tmp)); % remove data not in the channel
             tmp_depth = (max(zs) - min(zs)); % channel depth in mm; we will take the max elevation as levee elevation and min elevation as thalweg                  
-            depthmax = [depthmax, tmp_depth];
-            depth = [depth,tmp_depth]; % to save all channel depths for each radial transect
             zc_tmp = min(zs); % channel bed elevation relative to sea level
-            zc = [zc;zc_tmp];
             zlev_tmp = max(zs); % levee crest elevation relative to sea level
-            zlev = [zlev;zlev_tmp];
+            if tmp_depth == 0 % channel depth is sometimes 0 at the entrance
+                depthmax = [depthmax, NaN]; % if this is the case we want all variables to be NaN
+                depth = [depth, NaN];
+                zc = [zc;NaN];
+                zlev = [zlev;NaN];
+            else 
+                depthmax = [depthmax, tmp_depth]; % otherwise we want to append data to depth array
+                depth = [depth,tmp_depth]; % to save all channel depths for each radial transect
+                zc = [zc;zc_tmp]; % to save channel bed elevations
+                zlev = [zlev;zlev_tmp]; % to save channel levee elevations
+            end
         end
         depthmax = depthmax'; % we don't want to average in the non-trunk channels, as they are often a lot shallower
-        [val, idx] = max(depthmax);
+        [val, idx] = max(depthmax); % find index of max depth
         % save channel depth for each distance through time
-        if isempty(depthmax)
-            Hc_18(k,i) = NaN;
+        if isempty(depthmax) % no depths?
+            Hc_18(k,i) = NaN; % save NaN
             zc_18(k,i) = NaN;
             zlev_18(k,i) = NaN;
         else
-            Hc_18(k,i) = val;
-            zc_18(k,i) = zc(idx);
-            zlev_18(k,i) = zlev(idx);
+            Hc_18(k,i) = val; % value of max depth
+            zc_18(k,i) = zc(idx); % corresponding channel bed elevation
+            zlev_18(k,i) = zlev(idx); % corresponding levee elevation
         end
 
         Hc_all18 = [Hc_all18;depth']; % compile all channel depths
@@ -797,18 +794,18 @@ end
 % treatment
 % initialize empty matrices to fill 
 rad_dist = 0:5:3100; % each radial transect is 50 mm or 5 cm
-Hc_19 = NaN(length(rad_dist),nt_19); % channel depth with distance and time to use in aggradation below
+Hc_19 = NaN(length(rad_dist),nt_19-1); % channel depth with distance and time to use in aggradation below
 Hc_tot19 = NaN(length(rad_dist),100); % to save percentile channel depth with distance
 Hc_all19 = []; % all channel depths
-zff_19 = NaN(length(rad_dist),nt_19); % to save mean far-field elevation rsl
-zc_19 = NaN(length(rad_dist),nt_19); % to save channel bed elevation rsl
-zlev_19 = NaN(length(rad_dist),nt_19); % to save levee crest elevation rsl
+zff_19 = NaN(length(rad_dist),nt_19-1); % to save mean far-field elevation rsl
+zc_19 = NaN(length(rad_dist),nt_19-1); % to save channel bed elevation rsl
+zlev_19 = NaN(length(rad_dist),nt_19-1); % to save levee crest elevation rsl
 agg19 = NaN(length(rad_dist),nt_19-1); % total aggradation rate for distance through time
 c_agg19 = NaN(length(rad_dist),nt_19-1); % channel aggradation rate for distance through time
 ff_agg19 = NaN(length(rad_dist),nt_19-1); % far-field aggradation rate for distance through time
 d_agg19 = NaN(length(rad_dist),nt_19-1); % difference in mean aggradation between channel and ff for distance through time
 % loop through radial distances 
-for k = 1:(length(rad_dist)-1) % loop to run through different radial distances from the end of the entrance channel.
+for k = 2:(length(rad_dist)-1) % loop to run through different radial distances from the end of the entrance channel.
     % print which radial segment the loop is on
     caption = sprintf('Radial segment %d', k);
     caption2 = sprintf(' of %d', length(rad_dist)-1);
@@ -841,17 +838,17 @@ for k = 1:(length(rad_dist)-1) % loop to run through different radial distances 
         z = zrsl19(:,:,i); % elevation data for channel depth
         is_shot = CM_buffer_19(:,:,i).*rads.*area; % in channel or no?
         z = z.*is_shot; % elevation in the channels
-        is_shot(isnan(is_shot)) = 0;
+        is_shot(isnan(is_shot)) = 0; % we can't have NaNs in bwlabel
         
         % mean far-field elevation relative to sea level
-        ztmp = zrsl19(:,:,i).*rads.*area.*FF_buffer_19(:,:,i);
-        if isempty(ztmp)
-            zff_19(k,i) = NaN;
+        ztmp = zrsl19(:,:,i).*rads.*area.*FF_buffer_19(:,:,i); % far-field elevations
+        if sum(~isnan(ztmp(:)))==0 % if no far-field in transect
+            zff_19(k,i) = NaN; % save NaN
         else
-            zff_19(k,i) = mean(ztmp(:), 'omitnan');
+            zff_19(k,i) = mean(ztmp(:), 'omitnan'); % otherwise save mean elevation of far-field transect
         end
 
-        % individual channel segments 
+        % how many individual channel segments ?
         [label,n] = bwlabel(is_shot); % label gives a unique number to each individual segement recognized; n is number of channels (or segments)
        
         % channel depth
@@ -863,28 +860,35 @@ for k = 1:(length(rad_dist)-1) % loop to run through different radial distances 
             tmp = label;
             tmp(tmp ~= j) = NaN; % remove all data that is not in segement n
             tmp(tmp > 0) = 1; % turn segement data to 1
-            tmp(tmp < 1) = NaN; % make everything else 
+            tmp(tmp < 1) = NaN; % everything else is NaN 
             z_tmp = z.*tmp; % segment elevations to get depth
             zs = z_tmp(~isnan(z_tmp)); % remove data not in the channel
             tmp_depth = (max(zs) - min(zs)); % channel depth in mm; we will take the max elevation as levee elevation and min elevation as thalweg                  
-            depthmax = [depthmax, tmp_depth];
-            depth = [depth,tmp_depth]; % to save all channel depths for each radial transect
             zc_tmp = min(zs); % channel bed elevation relative to sea level
-            zc = [zc;zc_tmp];
             zlev_tmp = max(zs); % levee crest elevation relative to sea level
-            zlev = [zlev;zlev_tmp];
+            if tmp_depth == 0 % sometimes channel depth is 0 near the entrance
+                depthmax = [depthmax, NaN]; % so append NaN
+                depth = [depth, NaN];
+                zc = [zc;NaN];
+                zlev = [zlev;NaN];
+            else 
+                depthmax = [depthmax, tmp_depth]; % otherwise append depths
+                depth = [depth,tmp_depth]; % to save all channel depths for each radial transect
+                zc = [zc;zc_tmp]; % channel bed elevation
+                zlev = [zlev;zlev_tmp]; % levee elevation
+            end
         end
         depthmax = depthmax'; % we don't want to average in the non-trunk channels, as they are often a lot shallower
-        [val, idx] = max(depthmax);
+        [val, idx] = max(depthmax); % find index of deepest channel
         % save channel depth for each distance through time
-        if isempty(depthmax)
+        if isempty(depthmax) % if no channels in transect
             Hc_19(k,i) = NaN;
             zc_19(k,i) = NaN;
             zlev_19(k,i) = NaN;
         else
-            Hc_19(k,i) = val;
-            zc_19(k,i) = zc(idx);
-            zlev_19(k,i) = zlev(idx);
+            Hc_19(k,i) = val; % otherwise save value of max channel depth
+            zc_19(k,i) = zc(idx); % and corresponding channel bed elevation
+            zlev_19(k,i) = zlev(idx); % and corresponding levee elevation
         end
 
         Hc_all19 = [Hc_all19;depth']; % compile all channel depths
@@ -928,9 +932,14 @@ for k = 1:(length(rad_dist)-1) % loop to run through different radial distances 
 end
 
 %% Remove outliers from channel depth data if you want
-tmphc18 = rmoutliers(Hc_all18);
-tmphc19 = rmoutliers(Hc_all19);
-
+Hc_all18(Hc_all18==0) = []; % I think removing the first radial transect removed the need for this
+Hc_all19(Hc_all19==0) = []; % I think removing the first radial transect removed the need for this
+mean(Hc_all18(:), 'omitnan')
+std(Hc_all18(:), 'omitnan')
+mean(Hc_all19(:), 'omitnan')
+std(Hc_all19(:), 'omitnan')
+median(Hc_all18(:), 'omitnan')
+median(Hc_all19(:), 'omitnan')
 %% Calculate compensation timescale and channel in-filling rate
 hc = Hc_18(:,1:279);
 hc18 = mean(hc,2, 'omitnan');
@@ -980,6 +989,35 @@ iqrhigh19 = chan_array19(4,:);
 curve1_19 = y19 + iqrhigh19;
 curve2_19 = y19 - iqrlow19;
 
+h18 = median(Hc_18,2,'omitnan');
+iqr25 = prctile(Hc_18,25,2);
+iqr75 = prctile(Hc_18,75,2);
+chan_array18 = [rad_dist; h18'; iqr25'; iqr75'];
+cols = any(isnan(chan_array18),1);
+chan_array18(:,cols) = [];
+
+h19 = median(Hc_19,2,'omitnan');
+iqr25 = prctile(Hc_19,25,2);
+iqr75 = prctile(Hc_19,75,2);
+chan_array19 = [rad_dist; h19'; iqr25'; iqr75'];
+cols = any(isnan(chan_array19),1);
+chan_array19(:,cols) = [];
+
+%fill standard deviation
+y18 = chan_array18(2,:); % your mean vector;
+x18 = chan_array18(1,:);
+iqr25 = chan_array18(3,:);
+iqr75 = chan_array18(4,:);
+curve1_18 = y18 + iqr75;
+curve2_18 = y18 - iqr25;
+
+y19 = chan_array19(2,:); % your mean vector;
+x19 = chan_array19(1,:);
+iqr25 = chan_array19(3,:);
+iqr75 = chan_array19(4,:);
+curve1_19 = y19 + iqr75;
+curve2_19 = y19 - iqr25;
+
 % make figure
 fig = figure();
 plot(x18, y18, 'b-', 'LineWidth', 2)
@@ -990,9 +1028,9 @@ patch([x19 fliplr(x19)], [curve1_19 fliplr(curve2_19)], 'g')
 alpha(0.15)
 plot(x18, y18, 'b-', 'LineWidth', 2)
 plot(x19, y19, 'g-', 'LineWidth', 2)
-ylabel('channel depth (mm)')
+ylabel('trunk channel depth (mm)')
 xlabel('distance from apex (m)') 
-ylim([0 50])
+ylim([0 35])
 legend('control median', 'treatment median', 'control 25 - 75th', 'treatment 25 - 75th')
 set(gca, 'YMinorTick', 'On', 'XMinorTick', 'On', 'XAxisLocation', 'bottom', 'XAxisLocation', 'bottom')
 set(gcf, 'PaperUnits', 'inches');
@@ -1002,7 +1040,6 @@ saveas(fig, '../figures/esurf_Figure3c.pdf')
 
 %% Plot the data: compensation timescale
 % create arrays
-rad_dist = 0:0.05:3.1;
 tc18 = mean(Tc_18,2, 'omitnan');
 stdev18 = std(Tc_18,[],2, 'omitnan');
 chan_array18 = [rad_dist; tc18'; stdev18'];
@@ -1030,23 +1067,124 @@ curve2_19 = y19 - std19;
 
 % make figure
 fig = figure();
-patch([x18 fliplr(x18)], [curve1_18 fliplr(curve2_18)], 'b')
+plot(x18, y18, 'b-', 'LineWidth', 2)
 hold on
+plot(x19, y19, 'g-', 'LineWidth', 2)
+patch([x18 fliplr(x18)], [curve1_18 fliplr(curve2_18)], 'b')
 patch([x19 fliplr(x19)], [curve1_19 fliplr(curve2_19)], 'g')
 alpha(0.15)
 plot(x18, y18, 'b-', 'LineWidth', 2)
 plot(x19, y19, 'g-', 'LineWidth', 2)
 ylabel('compensation timescale (hrs)')
-ylim([0 300])
+ylim([0 120])
 legend('control mean', 'treatment mean', 'control stdev', 'treatment stdev')
 set(gca, 'XMinorTick', 'On', 'YMinorTick', 'On')
 set(gcf, 'PaperUnits', 'inches');
 y_width=7.25;x_width=9.125;
 set(gcf, 'PaperPosition', [0 0 x_width y_width]);
 saveas(fig, '../figures/esurf_Figure5X.pdf')
+
+%% Plot the data: levee elevation, channel elevation, far-field elevation
+% create arrays
+% channel
+zchan18 = mean(zc_18,2, 'omitnan');
+stdev18 = std(zc_18,[],2, 'omitnan');
+chan_array18 = [rad_dist; zchan18'; stdev18'];
+cols = any(isnan(chan_array18),1);
+chan_array18(:,cols) = [];
+
+zchan19 = mean(zc_19,2, 'omitnan');
+stdev19 = std(zc_19,[],2, 'omitnan');
+chan_array19 = [rad_dist; zchan19'; stdev19'];
+cols = any(isnan(chan_array19),1);
+chan_array19(:,cols) = [];
+
+%fill standard deviation
+yc18 = chan_array18(2,:); % your mean vector;
+xc18 = chan_array18(1,:);
+std18 = chan_array18(3,:);
+curve1c_18 = yc18 + std18;
+curve2c_18 = yc18 - std18;
+
+yc19 = chan_array19(2,:); % your mean vector;
+xc19 = chan_array19(1,:);
+std19 = chan_array19(3,:);
+curve1c_19 = yc19 + std19;
+curve2c_19 = yc19 - std19;
+
+% create arrays
+% levee
+zl18 = mean(zlev_18,2, 'omitnan');
+stdev18 = std(zlev_18,[],2, 'omitnan');
+chan_array18 = [rad_dist; zl18'; stdev18'];
+cols = any(isnan(chan_array18),1);
+chan_array18(:,cols) = [];
+
+zl19 = mean(zlev_19,2, 'omitnan');
+stdev19 = std(zlev_19,[],2, 'omitnan');
+chan_array19 = [rad_dist; zl19'; stdev19'];
+cols = any(isnan(chan_array19),1);
+chan_array19(:,cols) = [];
+
+%fill standard deviation
+yl18 = chan_array18(2,:); % your mean vector;
+xl18 = chan_array18(1,:);
+std18 = chan_array18(3,:);
+curve1l_18 = yl18 + std18;
+curve2l_18 = yl18 - std18;
+
+yl19 = chan_array19(2,:); % your mean vector;
+xl19 = chan_array19(1,:);
+std19 = chan_array19(3,:);
+curve1l_19 = yl19 + std19;
+curve2l_19 = yl19 - std19;
+
+% create arrays
+%far field 
+zf18 = mean(zff_18,2, 'omitnan');
+stdev18 = std(zff_18,[],2, 'omitnan');
+chan_array18 = [rad_dist; zf18'; stdev18'];
+cols = any(isnan(chan_array18),1);
+chan_array18(:,cols) = [];
+
+zf19 = mean(zff_19,2, 'omitnan');
+stdev19 = std(zff_19,[],2, 'omitnan');
+chan_array19 = [rad_dist; zf19'; stdev19'];
+cols = any(isnan(chan_array19),1);
+chan_array19(:,cols) = [];
+
+%fill standard deviation
+yf18 = chan_array18(2,:); % your mean vector;
+xf18 = chan_array18(1,:);
+std18 = chan_array18(3,:);
+curve1f_18 = yf18 + std18;
+curve2f_18 = yf18 - std18;
+
+yf19 = chan_array19(2,:); % your mean vector;
+xf19 = chan_array19(1,:);
+std19 = chan_array19(3,:);
+curve1f_19 = yf19 + std19;
+curve2f_19 = yf19 - std19;
+
+% make figure
+fig = figure();
+plot(xc18, yc18, 'b-', 'LineWidth', 2)
+hold on
+plot(xc19, yc19, 'g-', 'LineWidth', 2)
+plot(xl18, yl18, 'b--', 'LineWidth', 2)
+plot(xl19, yl19, 'g--', 'LineWidth', 2)
+plot(xf18, yf18, 'b:', 'LineWidth', 2)
+plot(xf19, yf19, 'g:', 'LineWidth', 2)
+ylabel('elevation relative to sea level (mm)')
+legend('control channel', 'treatment channel', 'control levee', 'treatment levee', 'control far-field', 'treatment far-field')
+set(gca, 'XMinorTick', 'On', 'YMinorTick', 'On')
+set(gcf, 'PaperUnits', 'inches');
+y_width=7.25;x_width=9.125;
+set(gcf, 'PaperPosition', [0 0 x_width y_width]);
+saveas(fig, '../figures/esurf_Figure5X.pdf')
+
 %% Plot the data: avulsion timescale
 % create arrays
-rad_dist = 0:0.05:3.1;
 ta18 = mean(Ta_18,2, 'omitnan');
 stdev18 = std(Ta_18,[],2, 'omitnan');
 chan_array18 = [rad_dist; ta18'; stdev18'];
@@ -1077,7 +1215,7 @@ plot(x18, y18, 'b-', 'LineWidth', 2)
 hold on
 plot(x19, y19, 'g-', 'LineWidth', 2)
 ylabel('avulsion timescale (hrs)')
-ylim([0 300])
+ylim([0 120])
 legend('control mean', 'treatment mean')
 set(gca, 'XMinorTick', 'On', 'YMinorTick', 'On')
 set(gcf, 'PaperUnits', 'inches');
@@ -1089,13 +1227,13 @@ saveas(fig, '../figures/esurf_Figure5c.pdf')
 % channel aggradation
 chan_agg_mean_18 = mean(c_agg18,2, 'omitnan');
 chan_agg_std_18 = mean(c_agg18,2, 'omitnan');
-chan_array18 = [0:0.05:3.1; chan_agg_mean_18'; chan_agg_std_18'];
+chan_array18 = [rad_dist; chan_agg_mean_18'; chan_agg_std_18'];
 cols = any(isnan(chan_array18),1);
 chan_array18(:,cols) = [];
 
 chan_agg_mean_19 = mean(c_agg19,2, 'omitnan');
 chan_agg_std_19 = mean(c_agg19,2, 'omitnan');
-chan_array19 = [0:0.05:3.1; chan_agg_mean_19'; chan_agg_std_19'];
+chan_array19 = [rad_dist; chan_agg_mean_19'; chan_agg_std_19'];
 cols = any(isnan(chan_array19),1);
 chan_array19(:,cols) = [];
 
@@ -1115,13 +1253,13 @@ curve2_19 = y19 - std19;
 % ff aggradation
 ff_agg_mean_18 = mean(ff_agg18,2, 'omitnan');
 ff_agg_std_18 = mean(ff_agg18,2, 'omitnan');
-ff_array18 = [0:0.05:3.1; ff_agg_mean_18'; ff_agg_std_18'];
+ff_array18 = [rad_dist; ff_agg_mean_18'; ff_agg_std_18'];
 cols = any(isnan(ff_array18),1);
 ff_array18(:,cols) = [];
 
 ff_agg_mean_19 = mean(ff_agg19,2, 'omitnan');
 ff_agg_std_19 = mean(ff_agg19,2, 'omitnan');
-ff_array19 = [0:0.05:3.1; ff_agg_mean_19'; ff_agg_std_19'];
+ff_array19 = [rad_dist; ff_agg_mean_19'; ff_agg_std_19'];
 cols = any(isnan(ff_array19),1);
 ff_array19(:,cols) = [];
 
@@ -1142,13 +1280,13 @@ ff_curve2_19 = ff_y19 - ff_std19;
 % dd aggradation
 d_agg_mean_18 = mean(d_agg18,2, 'omitnan');
 d_agg_std_18 = mean(d_agg18,2, 'omitnan');
-dd_array18 = [0:0.05:3.1; d_agg_mean_18'; d_agg_std_18'];
+dd_array18 = [rad_dist; d_agg_mean_18'; d_agg_std_18'];
 cols = any(isnan(dd_array18),1);
 dd_array18(:,cols) = [];
 
 d_agg_mean_19 = mean(dagg19,2, 'omitnan');
 d_agg_std_19 = mean(dagg19,2, 'omitnan');
-dd_array19 = [0:0.05:3.1; d_agg_mean_19'; d_agg_std_19'];
+dd_array19 = [rad_dist; d_agg_mean_19'; d_agg_std_19'];
 cols = any(isnan(dd_array19),1);
 dd_array19(:,cols) = [];
 
@@ -1174,6 +1312,8 @@ plot(x19, y19, 'g-', 'LineWidth', 2)
 plot(ff_x18, ff_y18, 'b--', 'LineWidth', 2)
 plot(ff_x19, ff_y19, 'g--', 'LineWidth', 2)
 yline(0.25,'k:', 'LineWidth', 2)
+ylim([0 4])
+xlim([0 3])
 ylabel('aggradation rate (mm/hr)')
 xlabel('distance from apex (m)')
 legend('control channel', 'treatment channel', 'control far-field', 'treatment far-field', 'RSLR{_b}')
