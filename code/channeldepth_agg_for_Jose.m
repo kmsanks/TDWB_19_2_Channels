@@ -211,10 +211,14 @@ Hc_all18 = []; % all channel depths
 zff_18 = NaN(length(rad_dist),nt_19-1); % to save mean far-field elevation rsl
 zc_18 = NaN(length(rad_dist),nt_19-1); % to save channel bed elevation rsl
 zlev_18 = NaN(length(rad_dist),nt_19-1); % to save levee crest elevation rsl
-agg18 = NaN(length(rad_dist),nt_18-1); % total aggradation rate for distance through time
-c_agg18 = NaN(length(rad_dist),nt_18-1); % channel aggradation rate for distance through time
-ff_agg18 = NaN(length(rad_dist),nt_18-1); % far-field aggradation rate for distance through time
-d_agg18 = NaN(length(rad_dist),nt_18-1); % difference in mean aggradation between channel and ff for distance through time
+agg18_mean = NaN(length(rad_dist),nt_18-1); % total aggradation rate for distance through time
+c_agg18_mean = NaN(length(rad_dist),nt_18-1); % channel aggradation rate for distance through time
+ff_agg18_mean = NaN(length(rad_dist),nt_18-1); % far-field aggradation rate for distance through time
+d_agg18_mean = NaN(length(rad_dist),nt_18-1); % difference in mean aggradation between channel and ff for distance through time
+agg18_median = NaN(length(rad_dist),nt_18-1); % total aggradation rate for distance through time
+c_agg18_median = NaN(length(rad_dist),nt_18-1); % channel aggradation rate for distance through time
+ff_agg18_median = NaN(length(rad_dist),nt_18-1); % far-field aggradation rate for distance through time
+d_agg18_median = NaN(length(rad_dist),nt_18-1); % difference in mean aggradation between channel and ff for distance through time
 % loop through radial distances 
 for k = 2:(length(rad_dist)-1) % loop to run through different radial distances from the end of the entrance channel.
     % print which radial segment the loop is on
@@ -256,7 +260,7 @@ for k = 2:(length(rad_dist)-1) % loop to run through different radial distances 
         if sum(~isnan(ztmp(:)))==0 % if there are no far-field pixels in transect
             zff_18(k,i) = NaN; % save NaN
         else
-            zff_18(k,i) = mean(ztmp(:), 'omitnan'); % otherwise save mean far-field elevation (mm rsl)
+            zff_18(k,i) = median(ztmp(:), 'omitnan'); % otherwise save median far-field elevation (mm rsl)
         end
 
         % how many individual channel segments ?
@@ -307,29 +311,37 @@ for k = 2:(length(rad_dist)-1) % loop to run through different radial distances 
         % total aggradation
         dz_t = dz(~isnan(dz(:)));
         if isempty(dz_t)
-            agg18(k,i) = NaN;
+            agg18_mean(k,i) = NaN;
+            agg18_median(k,i) = NaN;
         else
-            agg18(k,i) = mean(dz_t/2, 'omitnan'); % mm/hr
+            agg18_mean(k,i) = mean(dz_t/2, 'omitnan'); % mm/hr
+            agg18_median(k,i) = median(dz_t/2, 'omitnan'); % mm/hr
         end
         % channel aggradation
         dz_c = dz_chan(~isnan(dz_chan(:)));
         if isempty(dz_c)
-            c_agg18(k,i) = NaN;
+            c_agg18_mean(k,i) = NaN;
+            c_agg18_median(k,i) = NaN;
         else 
-            c_agg18(k,i) = mean(dz_c/2, 'omitnan'); % mm/hr
+            c_agg18_mean(k,i) = mean(dz_c/2, 'omitnan'); % mm/hr
+            c_agg18_median(k,i) = median(dz_c/2, 'omitnan'); % mm/hr
         end
         % far-field aggradation
         dz_ff = dz_ff(~isnan(dz_ff(:)));
         if isempty(dz_ff)
-            ff_agg18(k,i) = NaN;
+            ff_agg18_mean(k,i) = NaN;
+            ff_agg18_median(k,i) = NaN;
         else
-            ff_agg18(k,i) = mean(dz_ff/2, 'omitnan'); % mm/hr
+            ff_agg18_mean(k,i) = mean(dz_ff/2, 'omitnan'); % mm/hr
+            ff_agg18_median(k,i) = median(dz_ff/2, 'omitnan'); % mm/hr
         end
         % difference in agg between channel and ff
         if isempty(dz_c) || isempty(dz_ff)
-            d_agg18(k,i) = NaN;
+            d_agg18_mean(k,i) = NaN;
+            d_agg18_median(k,i) = NaN;
         else
-            d_agg18(k,i) = mean(dz_c/2, 'omitnan') - mean(dz_ff/2, 'omitnan'); % mm/hr
+            d_agg18_mean(k,i) = mean(dz_c/2, 'omitnan') - mean(dz_ff/2, 'omitnan'); % mm/hr
+            d_agg18_median(k,i) = median(dz_c/2, 'omitnan') - median(dz_ff/2, 'omitnan'); % mm/hr
         end
     end
     % save depth percentiles for each radial segment
@@ -351,10 +363,14 @@ Hc_all19 = []; % all channel depths
 zff_19 = NaN(length(rad_dist),nt_19-1); % to save mean far-field elevation rsl
 zc_19 = NaN(length(rad_dist),nt_19-1); % to save channel bed elevation rsl
 zlev_19 = NaN(length(rad_dist),nt_19-1); % to save levee crest elevation rsl
-agg19 = NaN(length(rad_dist),nt_19-1); % total aggradation rate for distance through time
-c_agg19 = NaN(length(rad_dist),nt_19-1); % channel aggradation rate for distance through time
-ff_agg19 = NaN(length(rad_dist),nt_19-1); % far-field aggradation rate for distance through time
-d_agg19 = NaN(length(rad_dist),nt_19-1); % difference in mean aggradation between channel and ff for distance through time
+agg19_mean = NaN(length(rad_dist),nt_19-1); % total aggradation rate for distance through time
+c_agg19_mean = NaN(length(rad_dist),nt_19-1); % channel aggradation rate for distance through time
+ff_agg19_mean = NaN(length(rad_dist),nt_19-1); % far-field aggradation rate for distance through time
+d_agg19_mean = NaN(length(rad_dist),nt_19-1); % difference in mean aggradation between channel and ff for distance through time
+agg19_median = NaN(length(rad_dist),nt_18-1); % total aggradation rate for distance through time
+c_agg19_median = NaN(length(rad_dist),nt_18-1); % channel aggradation rate for distance through time
+ff_agg19_median = NaN(length(rad_dist),nt_18-1); % far-field aggradation rate for distance through time
+d_agg19_median = NaN(length(rad_dist),nt_18-1); % difference in mean aggradation between channel and ff for distance through time
 % loop through radial distances 
 for k = 2:(length(rad_dist)-1) % loop to run through different radial distances from the end of the entrance channel.
     % print which radial segment the loop is on
@@ -396,7 +412,7 @@ for k = 2:(length(rad_dist)-1) % loop to run through different radial distances 
         if sum(~isnan(ztmp(:)))==0 % if no far-field in transect
             zff_19(k,i) = NaN; % save NaN
         else
-            zff_19(k,i) = mean(ztmp(:), 'omitnan'); % otherwise save mean elevation of far-field transect
+            zff_19(k,i) = median(ztmp(:), 'omitnan'); % otherwise save median elevation of far-field transect
         end
 
         % how many individual channel segments ?
@@ -447,29 +463,37 @@ for k = 2:(length(rad_dist)-1) % loop to run through different radial distances 
         % total aggradation
         dz_t = dz(~isnan(dz(:)));
         if isempty(dz_t)
-            agg19(k,i) = NaN;
+            agg19_mean(k,i) = NaN;
+            agg19_median(k,i) = NaN;
         else
-            agg19(k,i) = mean(dz_t/2, 'omitnan'); % mm/hr
+            agg19_mean(k,i) = mean(dz_t/2, 'omitnan'); % mm/hr
+            agg19_median(k,i) = median(dz_t/2, 'omitnan'); % mm/hr
         end
         % channel aggradation
         dz_c = dz_chan(~isnan(dz_chan(:)));
         if isempty(dz_c)
-            c_agg19(k,i) = NaN;
+            c_agg19_mean(k,i) = NaN;
+            c_agg19_median(k,i) = NaN;
         else 
-            c_agg19(k,i) = mean(dz_c/2, 'omitnan'); % mm/hr
+            c_agg19_mean(k,i) = mean(dz_c/2, 'omitnan'); % mm/hr
+            c_agg19_median(k,i) = median(dz_c/2, 'omitnan'); % mm/hr
         end
         % far-field aggradation
         dz_ff = dz_ff(~isnan(dz_ff(:)));
         if isempty(dz_ff)
-            ff_agg19(k,i) = NaN;
+            ff_agg19_mean(k,i) = NaN;
+            ff_agg19_median(k,i) = NaN;
         else
-            ff_agg19(k,i) = mean(dz_ff/2, 'omitnan'); % mm/hr
+            ff_agg19_mean(k,i) = mean(dz_ff/2, 'omitnan'); % mm/hr
+            ff_agg19_median(k,i) = median(dz_ff/2, 'omitnan'); % mm/hr
         end
         % difference in agg between channel and ff
         if isempty(dz_c) || isempty(dz_ff)
-            d_agg19(k,i) = NaN;
+            d_agg19_mean(k,i) = NaN;
+            d_agg19_median(k,i) = NaN;
         else
-            d_agg19(k,i) = mean(dz_c/2, 'omitnan') - mean(dz_ff/2, 'omitnan'); % mm/hr
+            d_agg19_mean(k,i) = mean(dz_c/2, 'omitnan') - mean(dz_ff/2, 'omitnan'); % mm/hr
+            d_agg19_median(k,i) = median(dz_c/2, 'omitnan') - median(dz_ff/2, 'omitnan'); % mm/hr
         end
     end
     % save depth percentiles for each radial segment
