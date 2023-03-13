@@ -181,8 +181,6 @@ end
 % control first
 rad_dist = 0:50:3100; % distance we will calculate for (from 0 to 3100 mm, by 50 mm or 5 cm).. we could change this if we want finer grained information
 % initialize empty matrices 
-area18 = NaN(length(rad_dist),nt_18); % total channel area
-chanfrac18 = NaN(length(rad_dist),nt_18); % radial channel fraction 
 width18 = NaN(length(rad_dist),nt_18); % trunk channel width
 n_chan18 = NaN(length(rad_dist),nt_18); % number of channels
 meanelev18 = NaN(length(rad_dist),1); % mean channel bed elevation relative to sea level
@@ -238,12 +236,8 @@ for k = 1:(length(rad_dist)-1) % loop to run through different radial distances 
    
         % save channel area and fraction
         if isempty(ca)
-           area18(k,i) = NaN;
-           chanfrac18(k,i) = NaN;
            width18(k,i) = NaN;
         else
-           area18(k,i) = sum(ca); 
-           chanfrac18(k,i) = sum(ca)/radial_area;
            width18(k,i) = max(width);
         end    
         
@@ -268,8 +262,6 @@ for i = 1:size(CM_19,3)
 end
 
 % initialize empty matrices 
-area19 = NaN(length(rad_dist),nt_19); % total channel area
-chanfrac19 = NaN(length(rad_dist),nt_19); % radial channel fraction 
 width19 = NaN(length(rad_dist),nt_19); % trunk channel width
 n_chan19 = NaN(length(rad_dist),nt_19); % number of channels
 meanelev19 = NaN(length(rad_dist),1); % mean channel bed elevation relative to sea level
@@ -333,12 +325,8 @@ for k = 1:(length(rad_dist)-1)%loop to run through different radial distances fr
    
             % save channel area and fraction
             if isempty(ca)
-               area19(k,i) = NaN;
-               chanfrac19(k,i) = NaN;
                width19(k,i) = NaN;
             else
-               area19(k,i) = sum(ca); 
-               chanfrac19(k,i) = sum(ca)/radial_area;
                width19(k,i) = max(width);
             end    
             
@@ -362,60 +350,7 @@ width_std18 = std(width18(:), 'omitnan');
 width_mean19 = mean(width19(:), 'omitnan');
 width_std19 = std(width19(:), 'omitnan');
 
-% channel fraction
-frac_mean18 = mean(chanfrac18(:), 'omitnan');
-frac_std18 = std(chanfrac18(:), 'omitnan');
-frac_mean19 = mean(chanfrac19(:), 'omitnan');
-frac_std19 = std(chanfrac19(:), 'omitnan');
-
-%% Plot the data: Figure 2a
-% create arrays
-c18 = mean(chanfrac18,2, 'omitnan');
-stdev18 = std(chanfrac18,[],2, 'omitnan');
-chan_array18 = [rad_dist; c18'; stdev18'];
-cols = any(isnan(chan_array18),1);
-chan_array18(:,cols) = [];
-
-c19 = mean(chanfrac19,2, 'omitnan');
-stdev19 = std(chanfrac19,[],2, 'omitnan');
-chan_array19 = [rad_dist; c19'; stdev19'];
-cols = any(isnan(chan_array19),1);
-chan_array19(:,cols) = [];
-
-%fill standard deviation
-y18 = chan_array18(2,:); % your mean vector;
-x18 = chan_array18(1,:);
-std18 = chan_array18(3,:);
-curve1_18 = y18 + std18;
-curve2_18 = y18 - std18;
-
-y19 = chan_array19(2,:); % your mean vector;
-x19 = chan_array19(1,:);
-std19 = chan_array19(3,:);
-curve1_19 = y19 + std19;
-curve2_19 = y19 - std19;
-
-% make figure
-fig = figure();
-plot(x18, y18, 'b', 'LineWidth', 2)
-hold on
-plot(x19, y19, 'g', 'LineWidth', 2)
-patch([x18 fliplr(x18)], [curve1_18 fliplr(curve2_18)], 'b')
-patch([x19 fliplr(x19)], [curve1_19 fliplr(curve2_19)], 'g')
-alpha(0.15)
-plot(x18, y18, 'b-', 'LineWidth', 2)
-plot(x19, y19, 'g-', 'LineWidth', 2)
-ylim([0 1])
-ylabel('channel fraction (-)')
-xlabel('distance from apex (m)') 
-legend('control mean', 'treatment mean', 'control stdev', 'treatment stdev')
-set(gca, 'YMinorTick', 'On', 'XMinorTick', 'On')
-set(gcf, 'PaperUnits', 'inches');
-y_width=7.25;x_width=9.125;
-set(gcf, 'PaperPosition', [0 0 x_width y_width]);
-saveas(fig, '../figures/esurf_Figure2a.pdf')
-
-%% Plot the data: Figure 3a
+%% Plot the data: Figure 4a
 ybars = [-9 5]; % marsh window
 rad_dist = 0:0.05:3.1;
 
@@ -460,7 +395,7 @@ set(gca, 'XMinorTick', 'On', 'YMinorTick', 'On')
 set(gcf, 'PaperUnits', 'inches');
 y_width=7.25;x_width=9.125;
 set(gcf, 'PaperPosition', [0 0 x_width y_width]);
-saveas(fig, '../figures/esurf_Figure3a.pdf')
+saveas(fig, '../figures/esurf_Figure4a.pdf')
 
 %% Plot the data: Figure 3c
 % create arrays
@@ -508,7 +443,7 @@ set(gca, 'YMinorTick', 'On', 'XMinorTick', 'On')
 set(gcf, 'PaperUnits', 'inches');
 y_width=7.25;x_width=9.125;
 set(gcf, 'PaperPosition', [0 0 x_width y_width]);
-saveas(fig, '../figures/esurf_Figure3c.pdf')
+saveas(fig, '../figures/esurf_Figure4c.pdf')
 
 %% Plot the data: Figure 3d
 % create arrays
@@ -556,7 +491,7 @@ set(gca, 'YMinorTick', 'On', 'XMinorTick', 'On')
 set(gcf, 'PaperUnits', 'inches');
 y_width=7.25;x_width=9.125;
 set(gcf, 'PaperPosition', [0 0 x_width y_width]);
-saveas(fig, '../figures/esurf_Figure3d.pdf')
+saveas(fig, '../figures/esurf_Figure4d.pdf')
 
 %% Now we will calculate channel depth, aggradation, and channel in-filling and compensation timescales
 % Lets buffer the channels so levee sedimentation is included in channel aggradation 
@@ -672,7 +607,7 @@ d_agg18_median = NaN(length(rad_dist),nt_18-1); % difference in mean aggradation
 for k = 2:(length(rad_dist)-1) % loop to run through different radial distances from the end of the entrance channel.
     % print which radial segment the loop is on
     caption = sprintf('Radial segment %d', k);
-    caption2 = sprintf(' of %d', length(rad_dist)-2);
+    caption2 = sprintf(' of %d', length(rad_dist)-1);
     fprintf('%s\n', strcat(caption,caption2))
 
     % section to find x,y nodes for radial transect and generate matrix of
@@ -956,14 +891,13 @@ for k = 2:(length(rad_dist)-1) % loop to run through different radial distances 
 end
 
 %% Remove outliers from channel depth data if you want
-Hc_all18(Hc_all18==0) = []; % I think removing the first radial transect removed the need for this
-Hc_all19(Hc_all19==0) = []; % I think removing the first radial transect removed the need for this
 mean(Hc_all18(:), 'omitnan')
 std(Hc_all18(:), 'omitnan')
 mean(Hc_all19(:), 'omitnan')
 std(Hc_all19(:), 'omitnan')
 median(Hc_all18(:), 'omitnan')
 median(Hc_all19(:), 'omitnan')
+
 %% Calculate compensation timescale and channel in-filling rate
 hc = Hc_18(:,1:279);
 hc18 = mean(hc,2, 'omitnan');
@@ -1060,53 +994,39 @@ set(gca, 'YMinorTick', 'On', 'XMinorTick', 'On', 'XAxisLocation', 'bottom', 'XAx
 set(gcf, 'PaperUnits', 'inches');
 y_width=7.25;x_width=9.125;
 set(gcf, 'PaperPosition', [0 0 x_width y_width]);
-saveas(fig, '../figures/esurf_Figure3c.pdf')
+saveas(fig, '../figures/esurf_Figure6c.pdf')
 
 %% Plot the data: compensation timescale
 % create arrays
 tc18 = mean(Tc_18,2, 'omitnan');
-stdev18 = std(Tc_18,[],2, 'omitnan');
-chan_array18 = [rad_dist; tc18'; stdev18'];
+chan_array18 = [rad_dist; tc18'];
 cols = any(isnan(chan_array18),1);
 chan_array18(:,cols) = [];
 
 tc19 = mean(Tc_19,2, 'omitnan');
-stdev19 = std(Tc_19,[],2, 'omitnan');
-chan_array19 = [rad_dist; tc19'; stdev19'];
+chan_array19 = [rad_dist; tc19'];
 cols = any(isnan(chan_array19),1);
 chan_array19(:,cols) = [];
 
-%fill standard deviation
 y18 = chan_array18(2,:); % your mean vector;
 x18 = chan_array18(1,:);
-std18 = chan_array18(3,:);
-curve1_18 = y18 + std18;
-curve2_18 = y18 - std18;
 
 y19 = chan_array19(2,:); % your mean vector;
 x19 = chan_array19(1,:);
-std19 = chan_array19(3,:);
-curve1_19 = y19 + std19;
-curve2_19 = y19 - std19;
 
 % make figure
 fig = figure();
 plot(x18, y18, 'b-', 'LineWidth', 2)
 hold on
 plot(x19, y19, 'g-', 'LineWidth', 2)
-patch([x18 fliplr(x18)], [curve1_18 fliplr(curve2_18)], 'b')
-patch([x19 fliplr(x19)], [curve1_19 fliplr(curve2_19)], 'g')
-alpha(0.15)
-plot(x18, y18, 'b-', 'LineWidth', 2)
-plot(x19, y19, 'g-', 'LineWidth', 2)
 ylabel('compensation timescale (hrs)')
 ylim([0 120])
-legend('control mean', 'treatment mean', 'control stdev', 'treatment stdev')
+legend('control mean', 'treatment mean')
 set(gca, 'XMinorTick', 'On', 'YMinorTick', 'On')
 set(gcf, 'PaperUnits', 'inches');
 y_width=7.25;x_width=9.125;
 set(gcf, 'PaperPosition', [0 0 x_width y_width]);
-saveas(fig, '../figures/esurf_Figure5X.pdf')
+saveas(fig, '../figures/esurf_Figure6X.pdf')
 
 %% Plot the data: levee elevation, channel elevation, far-field elevation
 % create arrays
@@ -1205,34 +1125,44 @@ set(gca, 'XMinorTick', 'On', 'YMinorTick', 'On')
 set(gcf, 'PaperUnits', 'inches');
 y_width=7.25;x_width=9.125;
 set(gcf, 'PaperPosition', [0 0 x_width y_width]);
-saveas(fig, '../figures/esurf_Figure5X.pdf')
+saveas(fig, '../figures/esurf_Figure6X.pdf')
 
+
+%% Calculate superelevatin
+Lr18 = mean(zlev_18,2,'omitnan')-mean(zff_18,2,'omitnan');
+Lr19 = mean(zlev_19,2,'omitnan')-mean(zff_19,2,'omitnan');
+h18 = mean(Hc_18,2,'omitnan');
+h19 = mean(Hc_19,2,'omitnan');
+
+SER18 = Lr18./h18;
+SER19 = Lr19./h19;
+
+fig = figure;
+plot(rad_dist, SER18', 'b-', 'LineWidth', 2)
+hold on
+plot(rad_dist, SER19', 'g-', 'LineWidth', 2)
+ylim([0 10])
+ylabel('superelevation ratio (-)')
+legend('control', 'treatment')
+set(gca, 'XMinorTick', 'On', 'YMinorTick', 'On')
 %% Plot the data: avulsion timescale
 % create arrays
 ta18 = mean(Ta_18,2, 'omitnan');
-stdev18 = std(Ta_18,[],2, 'omitnan');
-chan_array18 = [rad_dist; ta18'; stdev18'];
+chan_array18 = [rad_dist; ta18'];
 cols = any(isnan(chan_array18),1);
 chan_array18(:,cols) = [];
 
 ta19 = mean(Ta_19,2, 'omitnan');
-stdev19 = std(Ta_19,[],2, 'omitnan');
-chan_array19 = [rad_dist; ta19'; stdev19'];
+chan_array19 = [rad_dist; ta19'];
 cols = any(isnan(chan_array19),1);
 chan_array19(:,cols) = [];
 
 %fill standard deviation
 y18 = chan_array18(2,:); % your mean vector;
 x18 = chan_array18(1,:);
-std18 = chan_array18(3,:);
-curve1_18 = y18 + std18;
-curve2_18 = y18 - std18;
 
 y19 = chan_array19(2,:); % your mean vector;
 x19 = chan_array19(1,:);
-std19 = chan_array19(3,:);
-curve1_19 = y19 + std19;
-curve2_19 = y19 - std19;
 
 fig = figure();
 plot(x18, y18, 'b-', 'LineWidth', 2)
@@ -1245,7 +1175,7 @@ set(gca, 'XMinorTick', 'On', 'YMinorTick', 'On')
 set(gcf, 'PaperUnits', 'inches');
 y_width=7.25;x_width=9.125;
 set(gcf, 'PaperPosition', [0 0 x_width y_width]);
-saveas(fig, '../figures/esurf_Figure5c.pdf')
+saveas(fig, '../figures/esurf_Figure6d.pdf')
 %% Plot the data: Figure 5
 % error bars for plotting
 % channel aggradation
@@ -1348,16 +1278,13 @@ saveas(fig, '../figures/esurf_Figure5a.pdf')
 
 % Figure 5b
 fig = figure();
-patch([dd_x18 fliplr(dd_x18)], [dd_curve1_18 fliplr(dd_curve2_18)], 'b--')
-hold on
-patch([dd_x19 fliplr(dd_x19)], [dd_curve1_19 fliplr(dd_curve2_19)], 'g--')
-alpha(0.15)
 plot(dd_x18, dd_y18, 'b-', 'LineWidth', 2)
+hold on
 plot(dd_x19, dd_y19, 'g-', 'LineWidth', 2)
 ylabel('channel in-filling rate (mm/hr)')
 ylim([0 3])
 xlabel('distance from apex (m)') 
-legend('control mean', 'treatment mean', 'control stdev', 'treatment stdev') 
+legend('control mean', 'treatment mean') 
 set(gca,'XMinorTick','on','YMinorTick','on')
 y_width=7.25;x_width=9.125;
 set(gcf, 'PaperPosition', [0 0 x_width y_width]);
