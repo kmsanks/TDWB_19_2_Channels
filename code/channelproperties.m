@@ -200,7 +200,7 @@ for k = 1:(length(rad_dist)-1) % loop to run through different radial distances 
     bed = [];
     % loop through time
     for i = 1:size(CM_18,3) % loop through all timesteps
-        area = terr_area18(:,:,i);
+        area = terr_area18(:,:,i).*basin18;
         is_shot = CM_18(:,:,i).*radial_dd.*area; % in channel or no? on delta >-9 mm or no?
         is_chan = is_shot; % need 0s and 1s for bwlabel
         is_shot(is_shot == 0) = NaN; % need NaNs for z_rsl
@@ -281,7 +281,7 @@ for k = 1:(length(rad_dist)-1)%loop to run through different radial distances fr
     bed = [];
     % loop through time
     for i = 1:size(CM_19,3) % loop through all timesteps
-        area = terr_area19(:,:,i);
+        area = terr_area19(:,:,i).*basin19;
         is_shot = CM_19(:,:,i).*radial_dd.*area; % in channel or no? on delta >-9 mm or no?
         is_chan = is_shot; % need 0s and 1s for bwlabel
 
