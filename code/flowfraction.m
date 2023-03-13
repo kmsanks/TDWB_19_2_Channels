@@ -22,7 +22,7 @@ load('ZD_19.mat'); %this will be used to create a binary for the basin
 load('ZW_19.mat'); %topography; elevation data (mm) from the wet scans 
 load('CM_19.mat'); %channel maps
 load('flowscreen19.mat'); %area covered by flow
-load('terr_area19.mat')
+load('area19.mat')
 cd '../code'
 
 %% Set parameters
@@ -95,35 +95,35 @@ basin19(~isnan(basin19)) = 1;% everything inside basin is 1 except for well
 % save('../data/area18.mat', 'area18') % terrestrial area binary > 0mm rsl
 % 
 % treatment
-area19 = []; % initialize terrestrial area binary matrix
-for i= 1:nt_19 % loop through all timesteps
-    i
-    %What is sea level at time i
-    sl = (i*0.25*dt_19)+25; %first wet scan starts 48 minutes into the hour so i = i is a good approximation
-    elevationmask = ZW_19(:,:,i); 
-    elevationmask(elevationmask == 0) = NaN;
-    elevationmask_rslr = elevationmask - sl;
-    elevationmask_rslr(elevationmask_rslr < 0) = NaN;
-
-    % Now make the shoreline boundary that removes any floating mats from
-    b = elevationmask_rslr; 
-    
-    % Use this for shoreline boundary
-    b(b > 0) = 1;
-    b(b <= 0) = 0;  
-    
-    b(isnan(b)) = 0;% address the nan values that become a problem later when creating a binary mask
-    B = bwboundaries(b,'noholes'); % Find the boundary of the matrix...creates n cell arrays of varying sizes
-    [msize, mindex] = max(cellfun('size',B,1)); % Find the cell array with the largest size...this is the cell array that contains the shoreline locations
-    C = B{mindex,1}; % Get the length of the largest cell array that contains the shoreline locations
-
-    C2 = fliplr(C);
-    imagesc(b(:,:,1))
-    terr = drawpolygon('Position',C2);
-    area19(:,:,i) = createMask(terr);
-end
-
-save('../data/area19.mat', 'area19', '-v7.3') % terrestrial area binary > 0mm rsl
+% area19 = []; % initialize terrestrial area binary matrix
+% for i= 1:nt_19 % loop through all timesteps
+%     i
+%     %What is sea level at time i
+%     sl = (i*0.25*dt_19)+25; %first wet scan starts 48 minutes into the hour so i = i is a good approximation
+%     elevationmask = ZW_19(:,:,i); 
+%     elevationmask(elevationmask == 0) = NaN;
+%     elevationmask_rslr = elevationmask - sl;
+%     elevationmask_rslr(elevationmask_rslr < 0) = NaN;
+% 
+%     % Now make the shoreline boundary that removes any floating mats from
+%     b = elevationmask_rslr; 
+%     
+%     % Use this for shoreline boundary
+%     b(b > 0) = 1;
+%     b(b <= 0) = 0;  
+%     
+%     b(isnan(b)) = 0;% address the nan values that become a problem later when creating a binary mask
+%     B = bwboundaries(b,'noholes'); % Find the boundary of the matrix...creates n cell arrays of varying sizes
+%     [msize, mindex] = max(cellfun('size',B,1)); % Find the cell array with the largest size...this is the cell array that contains the shoreline locations
+%     C = B{mindex,1}; % Get the length of the largest cell array that contains the shoreline locations
+% 
+%     C2 = fliplr(C);
+%     imagesc(b(:,:,1))
+%     terr = drawpolygon('Position',C2);
+%     area19(:,:,i) = createMask(terr);
+% end
+% 
+% save('../data/area19.mat', 'area19', '-v7.3') % terrestrial area binary > 0mm rsl
 
 %% Calculate the basin wide flow (total, channel, and overbank) properties 
 % 1 is flow and 0 is no flow
