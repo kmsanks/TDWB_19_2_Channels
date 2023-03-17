@@ -387,6 +387,19 @@ idx19 = find(abs(chanfrac19-mean_chan_frac19)<=0.0005 & min(abs(obfrac19-mean_ob
 % control = 83,102,181,414,451,453,468,535
 % treatment = 68, 360, 400
 
+%% Overlay channel and overbank mask on image of mean flow conditions from above results
+conimg83 = imread('yourimage.jpg');
+maskcont83 = flowscreen18;
+treatimg360 = imread('yourimage.jpg');
+
+figure;
+imshow(contimg83);
+hold on;
+h = imshow(maskcont83);
+set(h, 'AlphaData', 0.5);
+
+
+
 %% Plot the data
 % data for violin plot of channel and overbank fraction
 G = [ones(size(chanfrac18)), 2*ones(size(chanfrac19)), 3*ones(size(obfrac18)), 4*ones(size(obfrac19))];
@@ -395,15 +408,9 @@ X = [chanfrac18, chanfrac19, obfrac18, obfrac19];
 % Violin plot for channel and overbank flow fraction for both experiments
 % this comes from 10.5281/zenodo.4559847
 
-fig = figure();
-violinplot(X,G);
-ylabel('fraction of delta top covered with flow (-)');
-set(gcf, 'PaperUnits', 'inches');
-x_width=7.25; 
-y_width=9.125;
-set(gcf, 'PaperPosition', [0 0 x_width y_width]);
-saveas(gcf,'../figures/esurf_Figure3a.pdf') % this was modified in illustrator for visual purposes
-
+figure()
+violinplot(X,G)
+ylabel('fraction of delta top covered with flow (-)')
 %% Plot the data (Figure 3b)
 rad_dist = 0:0.05:3.1;
 % create arrays
@@ -475,7 +482,7 @@ set(gca, 'XMinorTick', 'On', 'YMinorTick', 'On')
 set(gcf, 'PaperUnits', 'inches');
 y_width=7.25;x_width=9.125;
 set(gcf, 'PaperPosition', [0 0 x_width y_width]);
-saveas(fig, '../figures/esurf_Figure3b.pdf')
+saveas(fig, '../figures/esurf_Figure3c.pdf')
 
 fig = figure;
 plot(xob18, yob18, 'b', 'LineWidth', 2)
@@ -494,4 +501,4 @@ set(gca, 'XMinorTick', 'On', 'YMinorTick', 'On')
 set(gcf, 'PaperUnits', 'inches');
 y_width=7.25;x_width=9.125;
 set(gcf, 'PaperPosition', [0 0 x_width y_width]);
-saveas(fig, '../figures/esurf_Figure3c.pdf')
+saveas(fig, '../figures/esurf_Figure3d.pdf')

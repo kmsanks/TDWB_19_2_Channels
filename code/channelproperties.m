@@ -194,13 +194,13 @@ for k = 1:(length(rad_dist)-1) % loop to run through different radial distances 
     fprintf('%s\n', strcat(caption,caption2))
     % section to find x,y nodes for radial transect and generate matrix of
     % cross section topo and channel (yes/no) data
-    idx = dd18(dd18 >= rad_dist(k) & dd18 < rad_dist(k+1));
     radial_dd = dd18 >= rad_dist(k) & dd18 < rad_dist(k+1); % can look at this using imagesc(radial_dd) to visualize a 0.1 m radial transect
     
     bed = [];
     % loop through time
     for i = 1:size(CM_18,3) % loop through all timesteps
         area = terr_area18(:,:,i).*basin18;
+        area(isnan(area))=0; 
         is_shot = CM_18(:,:,i).*radial_dd.*area; % in channel or no? on delta >-9 mm or no?
         is_chan = is_shot; % need 0s and 1s for bwlabel
         is_shot(is_shot == 0) = NaN; % need NaNs for z_rsl
@@ -282,6 +282,7 @@ for k = 1:(length(rad_dist)-1)%loop to run through different radial distances fr
     % loop through time
     for i = 1:size(CM_19,3) % loop through all timesteps
         area = terr_area19(:,:,i).*basin19;
+        area(isnan(area))=0; 
         is_shot = CM_19(:,:,i).*radial_dd.*area; % in channel or no? on delta >-9 mm or no?
         is_chan = is_shot; % need 0s and 1s for bwlabel
 
@@ -1238,8 +1239,8 @@ dd_array18 = [rad_dist; d_agg_mean_18'; d_agg_std_18'];
 cols = any(isnan(dd_array18),1);
 dd_array18(:,cols) = [];
 
-d_agg_mean_19 = mean(dagg19,2, 'omitnan');
-d_agg_std_19 = mean(dagg19,2, 'omitnan');
+d_agg_mean_19 = mean(d_agg19_median,2, 'omitnan');
+d_agg_std_19 = mean(d_agg19_median,2, 'omitnan');
 dd_array19 = [rad_dist; d_agg_mean_19'; d_agg_std_19'];
 cols = any(isnan(dd_array19),1);
 dd_array19(:,cols) = [];
