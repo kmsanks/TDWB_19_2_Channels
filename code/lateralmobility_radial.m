@@ -177,7 +177,7 @@ for k = 1:length(rad_dist)-1%loop to run through different radial distances from
     %section to find x,y nodes for radial transect and generate matrix of
     %cross section topo and channel (yes/no) data
     radial_dd = (dd18 >= rad_dist(k) & dd18 < rad_dist(k+1));
-    radial_dd = radial_dd.*basin18;
+    radial_dd = radial_dd.*basin18; % to remove radial transect outside basin
     area = sum(radial_dd(:), 'omitnan')*2.5*10^-5; %area in m2
     lat_chan_mob_18 = [];
     for i = 1:((size(CM_18,3)-60))
@@ -239,11 +239,11 @@ mean_latmob50_19 = NaN(length(rad_dist19)-1,1); % mean 50% lateral mobility
 std_latmob50_19 = NaN(length(rad_dist19)-1,1); % standard deviation 50% lateral mobility
 
 % radial loop
-for k = 1:length(rad_dist19)-1%loop to run through different radial distances from the end of the entrance channel.
+for k = 41:length(rad_dist19)-1%loop to run through different radial distances from the end of the entrance channel.
     k
     %section to find x,y nodes for radial transect and generate matrix of
     %cross section topo and channel (yes/no) data
-    radial_dd = (dd19 >= rad_dist(k) & dd19 < rad_dist(k+1));
+    radial_dd = (dd19 >= rad_dist19(k) & dd19 < rad_dist19(k+1));
     radial_dd = radial_dd.*basin19;
     area = sum(radial_dd(:), 'omitnan')*2.5*10^-5; %area in m2
     lat_chan_mob_19 = [];
@@ -297,15 +297,33 @@ end
 
 distance = rad_dist/1000; % m
 distance = distance(2:end);
+distance19 = rad_dist19/1000;
+distance19 = distance19(2:end);
 %%Lets plot the data now
-figure
-plot(distance', latmob50_18, 'b-s')
+fig = figure;
+plot(distance', latmob50_18, 'b-')
 hold on
-plot(distance', latmob90_18, 'c-^')
-plot(distance, latmob50_19, 'g-s')
-plot(distance latmob90_19, 'g:^')
-grid on
-grid minor
-legend('control 50%', 'control 90%', 'treatment 50%', 'treatment 90%')
+plot(distance19', latmob50_19, 'g-')
+xlim([0 2])
+ylim([0 75])
+legend('control 50%', 'treatment 50%')
 xlabel('distance from apex (m)')
 ylabel('lateral mobility (hrs)')
+set(gca, 'XMinorTick', 'On', 'YMinorTick', 'On')
+save(fig, '../figure/radial_mobility50.pdf')
+
+fig = figure;
+plot(distance', latmob90_18, 'b-')
+hold on
+plot(distance19', latmob90_19, 'g-')
+xlim([0 2])
+ylim([0 200])
+legend('control', 'treatment')
+xlabel('distance from apex (m)')
+ylabel('lateral mobility (hrs)')
+set(gca, 'XMinorTick', 'On', 'YMinorTick', 'On')
+save(fig, '../figure/radial_mobility50.pdf')
+
+tmptreat = latmob90_19(1:40,:);
+fig = figure;
+plot(distance', tmptreat./latmob90_18, 'b-')
