@@ -306,11 +306,11 @@ hold on
 plot(distance19', latmob50_19, 'g-')
 xlim([0 2])
 ylim([0 75])
-legend('control 50%', 'treatment 50%')
+legend('control', 'treatment')
 xlabel('distance from apex (m)')
 ylabel('lateral mobility (hrs)')
 set(gca, 'XMinorTick', 'On', 'YMinorTick', 'On')
-save(fig, '../figure/radial_mobility50.pdf')
+saveas(fig, '../figures/esurf_Figure7c.pdf')
 
 fig = figure;
 plot(distance', latmob90_18, 'b-')
@@ -322,7 +322,7 @@ legend('control', 'treatment')
 xlabel('distance from apex (m)')
 ylabel('lateral mobility (hrs)')
 set(gca, 'XMinorTick', 'On', 'YMinorTick', 'On')
-save(fig, '../figure/radial_mobility50.pdf')
+saveas(fig, '../figures/esurf_Figure7d.pdf')
 
 tmptreat = latmob90_19(1:40,:);
 fig = figure;

@@ -51,7 +51,7 @@ end
 pland_19 = [];
 t_19 = [];
 for i = 1:nt_19
-    t_19 = [t_19;i*dt_19]; %time (hours)
+    t_19 = [t_19;(i-1)*dt_19]; %time (hours)
     z = ZD_19(:,:,i); %elevation (mm)
     z = z - (baselevel_rr*(i-1)*dt_19+ocean_zero); %elevation relative to sea level
     z(z > 0) = 1; %above sea level binary of 1s
@@ -106,14 +106,13 @@ fig = figure();
 plot(frac_18, area_pland_18, 'bo');
 hold on
 plot(frac_19, area_pland_19, 'go');
-xline(0.5);
-yline(area_frac50_18, 'b-');
-yline(area_frac50_19, 'g-');
-grid on 
-grid minor
+xline(0.5, 'LineWidth',2);
+yline(area_frac50_18, 'b-', 'LineWidth',2);
+yline(area_frac50_19, 'g-', 'LineWidth',2);
 xlabel('f_{land} (-)');
 ylabel('area (m^{2})');
-legend('control', 'treatment');
+legend('control', 'treatment', '50%', 'control 50%', 'treatment 50%');
+set(gca, 'XMinorTick','on', 'YMinorTick','On')
 y_width=7.25;x_width=9.125
 set(gcf, 'PaperPosition', [0 0 x_width y_width]);
 saveas(fig, '../figures/esurf_FigureB1.pdf')
@@ -190,90 +189,6 @@ for i = 1:((size(CM_19_crop,3)-60))
     end
 end 
 
-%% Now we will calculate radial lateral channel mobility
-% This is the same method, except mobility is calculated every 10 mm radially from the apex 
-% Note, this is commented out because it takes a long time to run, but if
-% you are interested, uncomment this section.
-
-% First we need radial distance matrix
-% control
-% [X18 Y18] = meshgrid(1:ny_18, 1:nx_18);
-% dd18 = sqrt((X18 - yentrance_18).^2 + (Y18 - xentrance_18).^2)*5;
-% %make everything outside of basin a NaN
-% tmp = zeros(796,522);
-% z = ZD_18(:,:,1);
-% z(z == 0.) = NaN;
-% tmp2 = z.*tmp;
-% tmp2(tmp2 == 0.) = 1;
-% dd18 = dd18.*tmp2; %radial distance matrix
-% 
-% % treatment
-% [X19 Y19] = meshgrid(1:ny_19, 1:nx_19);
-% dd19 = sqrt((X19 - yentrance_19).^2 + (Y19 - xentrance_19).^2)*5;
-% %make everything outside of basin a NaN
-% tmp = zeros(750,747);
-% z = ZD_19(:,:,1);
-% tmp2 = z.*tmp;
-% tmp2(tmp2 == 0.) = 1;
-% dd19 = dd19.*tmp2; %radial distance matrix
-% 
-% % now we will loop through radial distances
-% % control
-% rad_chan_mob_18 = []; % empty matrix
-% dist = 0:10:3100; % from 0 mm (the entrance channel) radially to 3100 mm from entrance, using a radial bin size of 10 mm
-% for i = 1:(size(CM_18,3)-60)
-%     for k = 1:(length(dist)-1)
-%         idx       = dd18(dd18 >= dist(k) & dd18 < dist(k+1)); % create index for radial bin
-%         radial_dd = dd18 >= dist(k) & dd18 < dist(k+1);
-%         radial_area  = nansum(radial_dd(:)); %number of pixels in radial bin
-%         for ii = i:size(CM_18_crop,3)      
-%             if ii == i
-%                CM_n = CM_18(:,:,ii).*radial_dd; %radial channel map
-%                rad_chan_mob_18_i = 1-((nansum(CM_n(:)))/radial_area); %radial mobility
-%                hour_18_i = (ii*2)-(i*2);
-%                rad_chan_mob_18_i = [hour_18_i, rad_chan_mob_18_i, k];
-%             else
-%                CM_n = CM_n + CM_18(:,:,ii);
-%                CM_n(CM_n > 1) = 1;
-%                rad_chan_mob_18_i = 1-((nansum(CM_n(:)))/radial_area);
-%                hour_18_i = ii-i;
-%                rad_chan_mob_18_i = [hour_18_i, rad_chan_mob_18_i, k];
-%                rad_chan_mob_18 = [rad_chan_mob_18;rad_chan_mob_18_i];
-%             end
-%         end 
-%     end   
-% end
-% 
-% [~, ~, X] = unique(rad_chan_mob_18(:,3)); % split matrix for each distance
-% rad_18 = accumarray(X,1:size(rad_chan_mob_18,3),[],@(r){rad_chan_mob_18(r,:)}); %cell array with agg,dist for each timestep
-% rad_mob_18 = []; %we want mean and std for each radial bin of how long it takes to get to 90% of delta visited by a channel 
-% 
-% % treatment
-% rad_chan_mob_19 = []; % empty matrix
-% dist = 0:10:3100; % from 0 mm (the entrance channel) radially to 3100 mm from entrance, using a radial bin size of 10 mm
-% for i = 1:(size(CM_19,3)-60)
-%     for k = 1:(length(dist)-1)
-%         idx       = dd19(dd19 >= dist(k) & dd19 < dist(k+1)); % create index for radial bin
-%         radial_dd = dd19 >= dist(k) & dd19 < dist(k+1);
-%         radial_area  = nansum(radial_dd(:)); %number of pixels in radial bin
-%         for ii = i:size(CM_19,3)      
-%             if ii == i
-%                CM_n = CM_19(:,:,ii).*radial_dd; %radial channel map
-%                rad_chan_mob_19_i = 1-((nansum(CM_n(:)))/radial_area); %radial mobility
-%                hour_19_i = (ii*2)-(i*2);
-%                rad_chan_mob_19_i = [hour_19_i, rad_chan_mob_19_i, k];
-%             else
-%                CM_n = CM_n + CM_19(:,:,ii);
-%                CM_n(CM_n > 1) = 1;
-%                rad_chan_mob_19_i = 1-((nansum(CM_n(:)))/radial_area);
-%                hour_19_i = ii-i;
-%                rad_chan_mob_19_i = [hour_18_i, rad_chan_mob_19_i, k];
-%                rad_chan_mob_19 = [rad_chan_mob_18;rad_chan_mob_19_i];
-%             end
-%         end 
-%     end   
-% end
-
 %% Calculate lateral mobility through time for plotting and statistics
 % control
 [ud,~,iy] = unique(lat_chan_mob_18(:,1));  
@@ -284,29 +199,6 @@ std_lat_chan_mob_18 = [ud, accumarray(iy,lat_chan_mob_18(:,2),[],@std)];
 mean_lat_chan_mob_19 = [ud, accumarray(iy,lat_chan_mob_19(:,2),[],@mean)];
 std_lat_chan_mob_19 = [ud, accumarray(iy,lat_chan_mob_19(:,2),[],@std)];
 std_lat_chan_mob_19(std_lat_chan_mob_19 < 0) = 0;
-
-% figure()
-% plot(mean_lat_chan_mob_18(:,1), mean_lat_chan_mob_18(:,2), 'bo');
-% hold on
-% plot(mean_lat_chan_mob_19(:,1), mean_lat_chan_mob_19(:,2), 'go');
-% grid on
-% grid minor
-% xlim([0 350]);
-% xlabel('measurement window (hr)');
-% ylabel('fraction visited  by channel (-)');
-% legend('control', 'treatment');
-
-%Log-space
-% figure()
-% semilogy(mean_lat_chan_mob_18(:,1), mean_lat_chan_mob_18(:,2), 'bo');
-% hold on
-% semilogy(mean_lat_chan_mob_19(:,1), mean_lat_chan_mob_19(:,2), 'go');
-% grid on
-% grid minor
-% xlim([0 560]);
-% xlabel('measurement window (hr)');
-% ylabel('log(fraction visited by channel (-))');
-% legend('control', 'treatment');
 
 %differnce to plot contours on each other
 xdif = xentrance_19 - xentrance_18;
@@ -376,18 +268,6 @@ std_f_um_18 = [ud, accumarray(iy,f_um_18(:,2),[],@std)];
 mean_f_um_19 = [ud, accumarray(iy,f_um_19(:,2),[],@mean)];
 std_f_um_19 = [ud, accumarray(iy,f_um_19(:,2),[],@std)];
 
-% figure()
-% plot(mean_f_um_18(:,1), mean_f_um_18(:,2), 'bo');
-% hold on
-% plot(mean_f_um_19(:,1), mean_f_um_19(:,2), 'go');
-% grid on
-% grid minor
-% xlim([0 200]);
-% xlabel('measurement window (hr)');
-% ylabel('fraction unmodified (-)');
-% legend('control', 'treatment');
-
-
 % plot with standard deviation
 % lateral channel mobility
 array18_lat = [(1:559); mean_lat_chan_mob_18(:,2)'; std_lat_chan_mob_18(:,2)'];
@@ -433,6 +313,7 @@ std19_fum = array19_fum(3,:);
 curve1_19_fum = y19_fum + std19_fum;
 curve2_19_fum = y19_fum - std19_fum;
 
+%% Plot the data: Figure 7ab
 fig = figure();
 %plot lateral channel mobility
 subplot(1,2,1)
@@ -473,9 +354,9 @@ axis('square')
 set(gcf, 'PaperUnits', 'inches');
 y_width=6;x_width=6;
 set(gcf, 'PaperPosition', [0 0 x_width y_width]);
-saveas(fig, '../figures/esurf_Figure6.pdf')
+saveas(fig, '../figures/esurf_Figure7ab.pdf')
 
-%plot in semilogy space
+%% Plot the data: Figure B2
 fig = figure();
 subplot(1,2,1)
 semilogy(mean_lat_chan_mob_18(:,1), mean_lat_chan_mob_18(:,2), 'bo');
@@ -487,6 +368,7 @@ xlim([0 560]);
 xlabel('measurement window (hr)');
 ylabel('log(fraction not visited by channel (-))');
 legend('control', 'treatment');
+axis('square');
 subplot(1,2,2)
 semilogy(mean_f_um_18(:,1), mean_f_um_18(:,2), 'bo');
 grid on
@@ -499,13 +381,15 @@ xlim([0 200]);
 xlabel('measurement window (hr)');
 ylabel('log(fraction unmodified (-))');
 legend('control', 'treatment');
+axis('square');
 %patch([min(xlim) max(xlim) max(xlim) min(xlim)], [ybars(1) ybars(1), ybars(2) ybars(2)], [0.8 0.8 0.8])
 set(gcf, 'PaperUnits', 'inches');
 y_width=6;x_width=6;
 set(gcf, 'PaperPosition', [0 0 x_width y_width]);
 saveas(fig, '../figures/esurf_FigureB2.pdf')
 
-% exponential fit for e-folding ts
+%% Calculate timescales for lateral mobility and modification
+% exponential fit for modification ts
 x = mean_f_um_18(:,1);
 x1 = x(1:60);
 y = mean_f_um_18(:,2);
@@ -513,7 +397,7 @@ y1 = y(1:60);
 f0 = ezfit(x1, y1, 'exp');
 efold18 = -1/f0.m(2);
 
-% exponential fit for e-folding ts
+% exponential fit for modification ts
 x = mean_f_um_19(:,1);
 x2 = x(1:80);
 y = mean_f_um_19(:,2);
@@ -538,9 +422,11 @@ f1 = ezfit(x2, y2, 'exp');
 latfold19 = -1/f1.m(2);
 
 %% Channel density and histogram
+% How many hours does a channel occupy each delta pixel?
 chan_dens18 = sum(CM_18_crop, 3, 'omitnan');
 chan_dens19 = sum(CM_19_crop, 3, 'omitnan');
 
+% Plot the data: Figure B6
 fig = figure;
 subplot(2,2,1)
 imagesc(chan_dens18(1:600,109:509))
@@ -624,7 +510,7 @@ chan_dens19 = sum(CM_19, 3, 'omitnan');
 max_dens18 = max_consec_channel_18./chan_dens18;
 max_dens19 = max_consec_channel_19./chan_dens19;
 
-% Plot the data
+% Plot the data: Figure B7
 fig = figure();
 subplot(3,2,1)
 imagesc(max_consec_channel_18(1:600,109:509))
@@ -664,6 +550,6 @@ xlabel('max consecutive hours channelized')
 legend('treatment','median')
 xlim([0 50])
 ylim([0 0.15])
-y_width=7.25;x_width=9.125
+y_width=7.25;x_width=9.125;
 set(gcf, 'PaperPosition', [0 0 x_width y_width]);
 saveas(fig, '../figures/esurf_FigureB7.pdf')

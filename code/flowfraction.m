@@ -387,19 +387,6 @@ idx19 = find(abs(chanfrac19-mean_chan_frac19)<=0.0005 & min(abs(obfrac19-mean_ob
 % control = 83,102,181,414,451,453,468,535
 % treatment = 68, 360, 400
 
-%% Overlay channel and overbank mask on image of mean flow conditions from above results
-conimg83 = imread('yourimage.jpg');
-maskcont83 = flowscreen18;
-treatimg360 = imread('yourimage.jpg');
-
-figure;
-imshow(contimg83);
-hold on;
-h = imshow(maskcont83);
-set(h, 'AlphaData', 0.5);
-
-
-
 %% Plot the data
 % data for violin plot of channel and overbank fraction
 G = [ones(size(chanfrac18)), 2*ones(size(chanfrac19)), 3*ones(size(obfrac18)), 4*ones(size(obfrac19))];
@@ -482,7 +469,7 @@ set(gca, 'XMinorTick', 'On', 'YMinorTick', 'On')
 set(gcf, 'PaperUnits', 'inches');
 y_width=7.25;x_width=9.125;
 set(gcf, 'PaperPosition', [0 0 x_width y_width]);
-saveas(fig, '../figures/esurf_Figure3c.pdf')
+saveas(fig, '../figures/esurf_Figure3a.pdf')
 
 fig = figure;
 plot(xob18, yob18, 'b', 'LineWidth', 2)
@@ -497,6 +484,51 @@ ylim([0 1])
 ylabel('overbank fraction (-)')
 xlabel('distance from apex (m)') 
 legend('control mean', 'treatment mean', 'control stdev', 'treatment stdev')
+set(gca, 'XMinorTick', 'On', 'YMinorTick', 'On')
+set(gcf, 'PaperUnits', 'inches');
+y_width=7.25;x_width=9.125;
+set(gcf, 'PaperPosition', [0 0 x_width y_width]);
+saveas(fig, '../figures/esurf_Figure3b.pdf')
+
+%% Overlay channel and overbank mask on image of mean flow conditions from above results
+i = 181;
+conimg181 = imread('../data/TDB_18_1_H_0181.jpg');
+chan = CM_18(:,:,i).*basin18;
+maskchan181 = chan; 
+flow = flowscreen18(:,:,i).*basin18;
+flowtot = flow + chan; %deep parts of channel are sometimes not included in flow
+flowtot(flowtot>=1) = 1;
+ob = flowtot-chan; %0 channel or no
+maskob = ob;
+fig = figure;
+imshow(conimg181);
+hold on;
+h = imshow(maskchan83);
+j = imshow(maskob83);
+set(h, 'AlphaData', 0.3);
+set(j, 'AlphaData', 0.3);
+set(gcf, 'PaperUnits', 'inches');
+y_width=7.25;x_width=9.125;
+set(gcf, 'PaperPosition', [0 0 x_width y_width]);
+saveas(fig, '../figures/esurf_Figure3c.pdf')
+
+
+i = 360;
+treatimg360 = imread('../data/TDWB_19_2_Hour_360_Wet.jpg');
+chan = CM_19(:,:,i).*basin19;
+maskchan360 = chan; 
+flow = flowscreen19(:,:,i).*basin19;
+flowtot = flow + chan; %deep parts of channel are sometimes not included in flow
+flowtot(flowtot>=1) = 1;
+ob = flowtot-chan; %0 channel or no
+maskob360 = ob;
+fig = figure;
+imshow(treatimg360);
+hold on;
+h = imshow(maskchan360);
+j = imshow(maskob360);
+set(h, 'AlphaData', 0.3);
+set(j, 'AlphaData', 0.3);
 set(gca, 'XMinorTick', 'On', 'YMinorTick', 'On')
 set(gcf, 'PaperUnits', 'inches');
 y_width=7.25;x_width=9.125;
