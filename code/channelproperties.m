@@ -383,11 +383,11 @@ plot(x19, y19, 'g', 'LineWidth', 2)
 patch([x18 fliplr(x18)], [curve1_18 fliplr(curve2_18)], 'b')
 patch([x19 fliplr(x19)], [curve1_19 fliplr(curve2_19)], 'g')
 patch([min(xlim) max(xlim) max(xlim) min(xlim)], [ybars(1) ybars(1), ybars(2) ybars(2)], 'k')
-alpha(0.15)
+alpha(0.1)
 yline(0, 'k-', 'linewidth', 2)
 plot(x18, y18, 'b', 'LineWidth', 2)
 plot(x19, y19, 'g', 'LineWidth', 2)
-ylim([-10 40])
+ylim([-15 35])
 xlim([0 3])
 ylabel('mean channel bed elevation relative to sea level (mm)')
 xlabel('distance from apex (m)') 
@@ -432,7 +432,7 @@ hold on
 plot(x19, y19, 'g-', 'LineWidth', 2)
 patch([x18 fliplr(x18)], [curve1_18 fliplr(curve2_18)], 'b')
 patch([x19 fliplr(x19)], [curve1_19 fliplr(curve2_19)], 'g')
-alpha(0.15)
+alpha(0.10)
 plot(x18, y18, 'b-', 'LineWidth', 2)
 plot(x19, y19, 'g-', 'LineWidth', 2)
 ylabel('max channel width (cm)')
@@ -480,7 +480,7 @@ hold on
 plot(x19, y19, 'g-', 'LineWidth', 2)
 patch([x18 fliplr(x18)], [curve1_18 fliplr(curve2_18)], 'b')
 patch([x19 fliplr(x19)], [curve1_19 fliplr(curve2_19)], 'g')
-alpha(0.15)
+alpha(0.10)
 plot(x18, y18, 'b-', 'LineWidth', 2)
 plot(x19, y19, 'g-', 'LineWidth', 2)
 ylim([0 5])
@@ -919,83 +919,21 @@ Ta_19 = hc19./dagg19;
 
 %% Plot channel depth
 rad_dist = rad_dist./1000.;
-h18 = Hc_tot18(:,50);
-iqr25 = Hc_tot18(:,25);
-iqr75 = Hc_tot18(:,75);
-chan_array18 = [rad_dist; h18'; iqr25'; iqr75'];
-cols = any(isnan(chan_array18),1);
-chan_array18(:,cols) = [];
-
-h19 = Hc_tot19(:,50);
-iqr25 = Hc_tot19(:,25);
-iqr75 = Hc_tot19(:,75);
-chan_array19 = [rad_dist; h19'; iqr25'; iqr75'];
-cols = any(isnan(chan_array19),1);
-chan_array19(:,cols) = [];
-
-%fill standard deviation
-y18 = chan_array18(2,:); % your mean vector;
-x18 = chan_array18(1,:);
-iqrlow18 = chan_array18(3,:);
-iqrhigh18 = chan_array18(4,:);
-curve1_18 = y18 + iqrhigh18;
-curve2_18 = y18 - iqrlow18;
-
-y19 = chan_array19(2,:); % your mean vector;
-x19 = chan_array19(1,:);
-iqrlow19 = chan_array19(3,:);
-iqrhigh19 = chan_array19(4,:);
-curve1_19 = y19 + iqrhigh19;
-curve2_19 = y19 - iqrlow19;
-
-h18 = median(Hc_18,2,'omitnan');
-iqr25 = prctile(Hc_18,25,2);
-iqr75 = prctile(Hc_18,75,2);
-chan_array18 = [rad_dist; h18'; iqr25'; iqr75'];
-cols = any(isnan(chan_array18),1);
-chan_array18(:,cols) = [];
-
-h19 = median(Hc_19,2,'omitnan');
-iqr25 = prctile(Hc_19,25,2);
-iqr75 = prctile(Hc_19,75,2);
-chan_array19 = [rad_dist; h19'; iqr25'; iqr75'];
-cols = any(isnan(chan_array19),1);
-chan_array19(:,cols) = [];
-
-%fill standard deviation
-y18 = chan_array18(2,:); % your mean vector;
-x18 = chan_array18(1,:);
-iqr25 = chan_array18(3,:);
-iqr75 = chan_array18(4,:);
-curve1_18 = y18 + iqr75;
-curve2_18 = y18 - iqr25;
-
-y19 = chan_array19(2,:); % your mean vector;
-x19 = chan_array19(1,:);
-iqr25 = chan_array19(3,:);
-iqr75 = chan_array19(4,:);
-curve1_19 = y19 + iqr75;
-curve2_19 = y19 - iqr25;
 
 % make figure
 fig = figure();
-plot(x18, y18, 'b-', 'LineWidth', 2)
+plot(rad_dist, hc18', 'b-', 'LineWidth', 2)
 hold on
-plot(x19, y19, 'g-', 'LineWidth', 2)
-patch([x18 fliplr(x18)], [curve1_18 fliplr(curve2_18)], 'b')
-patch([x19 fliplr(x19)], [curve1_19 fliplr(curve2_19)], 'g')
-alpha(0.15)
-plot(x18, y18, 'b-', 'LineWidth', 2)
-plot(x19, y19, 'g-', 'LineWidth', 2)
+plot(rad_dist, hc19', 'g-', 'LineWidth', 2)
 ylabel('trunk channel depth (mm)')
 xlabel('distance from apex (m)') 
 ylim([0 35])
-legend('control median', 'treatment median', 'control 25 - 75th', 'treatment 25 - 75th')
+legend('control', 'treatment')%, 'control IQR', 'treatment IQR')
 set(gca, 'YMinorTick', 'On', 'XMinorTick', 'On', 'XAxisLocation', 'bottom', 'XAxisLocation', 'bottom')
 set(gcf, 'PaperUnits', 'inches');
 y_width=7.25;x_width=9.125;
 set(gcf, 'PaperPosition', [0 0 x_width y_width]);
-saveas(fig, '../figures/esurf_Figure6c.pdf')
+saveas(fig, '../figures/esurf_Figure6b.pdf')
 
 %% Plot the data: compensation timescale
 % create arrays
@@ -1158,6 +1096,13 @@ chan_array19 = [rad_dist; ta19'];
 cols = any(isnan(chan_array19),1);
 chan_array19(:,cols) = [];
 
+%clean data near apex
+idx = chan_array18(1, :) < 0.1;
+chan_array18(:, idx) = NaN;
+
+idx = chan_array19(1, :) < 0.1;
+chan_array19(:, idx) = NaN;
+
 %fill standard deviation
 y18 = chan_array18(2,:); % your mean vector;
 x18 = chan_array18(1,:);
@@ -1170,7 +1115,8 @@ plot(x18, y18, 'b-', 'LineWidth', 2)
 hold on
 plot(x19, y19, 'g-', 'LineWidth', 2)
 ylabel('avulsion timescale (hrs)')
-ylim([0 120])
+xlabel('distance from apex (m)')
+ylim([0 150])
 legend('control mean', 'treatment mean')
 set(gca, 'XMinorTick', 'On', 'YMinorTick', 'On')
 set(gcf, 'PaperUnits', 'inches');
@@ -1267,7 +1213,7 @@ plot(x19, y19, 'g-', 'LineWidth', 2)
 plot(ff_x18, ff_y18, 'b--', 'LineWidth', 2)
 plot(ff_x19, ff_y19, 'g--', 'LineWidth', 2)
 yline(0.25,'k:', 'LineWidth', 2)
-ylim([0 4])
+ylim([0 3])
 xlim([0 3])
 ylabel('aggradation rate (mm/hr)')
 xlabel('distance from apex (m)')
@@ -1275,7 +1221,7 @@ legend('control channel', 'treatment channel', 'control far-field', 'treatment f
 set(gca,'XMinorTick','on','YMinorTick','on')
 y_width=7.25;x_width=9.125;
 set(gcf, 'PaperPosition', [0 0 x_width y_width]);
-saveas(fig, '../figures/esurf_Figure5a.pdf')
+saveas(fig, '../figures/esurf_Figure6a.pdf')
 
 % Figure 5b
 fig = figure();
@@ -1289,4 +1235,4 @@ legend('control mean', 'treatment mean')
 set(gca,'XMinorTick','on','YMinorTick','on')
 y_width=7.25;x_width=9.125;
 set(gcf, 'PaperPosition', [0 0 x_width y_width]);
-saveas(fig, '../figures/esurf_Figure5b.pdf')
+saveas(fig, '../figures/esurf_Figure6c.pdf')

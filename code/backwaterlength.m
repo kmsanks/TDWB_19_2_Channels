@@ -291,7 +291,7 @@ hold on
 plot(x(idx_plot_19),y(idx_plot_19), 'g-', 'LineWidth', 2)
 yline((mean(backwater_length18, 'omitnan')/1000), 'b:', 'LineWidth', 2)
 yline((mean(backwater_length19, 'omitnan')/1000), 'g:', 'LineWidth', 2)
-plot(hour_nomaps19*2, bw_nomaps19, 'kx', 'LineWidth', 1.5, 'MarkerSize', 10)
+plot(hour_nomaps19*2, (mean(backwater_length19, 'omitnan')/1000), 'kx', 'LineWidth', 1.5, 'MarkerSize', 10)
 xlim([0 560])
 xlabel('time (hrs)')
 ylabel('backwater length (m)')
@@ -299,4 +299,23 @@ legend('control', 'treatment', 'control mean', 'treatment mean', 'no channel map
 set(gca,'XMinorTick','on','YMinorTick','on')
 y_width=7.25;x_width=9.125
 set(gcf, 'PaperPosition', [0 0 x_width y_width]);
-saveas(fig1, '../figures/esurf_Figure4.pdf')
+saveas(fig1, '../figures/esurf_Figure5a.pdf')
+
+%% Plot the data
+% data for violin plot of backwater length (Lb)
+Lb_18 = backwater_length18/1000;
+Lb_19 = backwater_length19/1000;
+
+G = [ones(size(Lb_18)), 2*ones(size(Lb_19))];
+X = [Lb_18, Lb_19];
+
+fig = figure();
+violinplot(X,G);
+ylabel('backwater length (m)');
+ylim([0 2])
+set(gcf, 'PaperUnits', 'inches');
+set(gca,'XMinorTick','on','YMinorTick','on')
+y_width=7.25 ;x_width=9.125;
+set(gcf, 'PaperPosition', [0 0 x_width y_width]);
+saveas(fig,'../figures/esurf_Figure5b.pdf')
+

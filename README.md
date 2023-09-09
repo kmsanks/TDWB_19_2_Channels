@@ -8,7 +8,7 @@ The experimental delta data come from two experiments run at the Tulane Sediment
 For more information on experimental conditions, please see the data repositories hosted at: https://sead2.ncsa.illinois.edu/spaces/5825f529e4b0f3dd19c8d93a.
 
 ## What does this repository provide?
-This repository contains all of the code relevant to produce the results and figures contained in the manuscript titled "Non-fluvial deposition has a first-order control on channel properties and kinematics in an experimental river delta (Sanks et al., in review)". The code contained herein was written using MATLAB R2022a. Note: all the "Core Script Files" should run out the box, as relative paths were used in creation of this script.
+This repository contains all of the code relevant to produce the results and figures contained in the manuscript titled "Marsh induced backwater: the influence of non-fluvial sedimentation on a delta's channel morphology and kinematics (Sanks et al., in review)". The code contained herein was written using MATLAB R2022a. Note: all the "Core Script Files" should run out the box, as relative paths were used in creation of this script.
 
 ## Contents
 The repository contains three folders:
@@ -44,27 +44,30 @@ Please download the following files from FIGSHRE REPO and put into this folder.
 
 ## Core Script Files: TDWB_19_2_Channels/code
 1. flowfraction.m - This script calculates total, channel, and overbank flow area and fraction for both the control and treatment experiments for the terrestrial delta. 
-   * This sciript produces Figure 2 and some results from Table 1. 
+   * This sciript produces Figure 3 and some results from Table 1. 
    * Data needed: ZD_18.mat, CM_18.mat, flowscreen18.mat, ZD_19.mat, CM_19.mat, and flowscreen19.mat.
 2. channelproperties.m - This script calculates the average channel bed elevations relative to sea level, channel depth, channel width, channel aggradation, far-field aggradation, and channel in-filling rate as a function of radial distance from the apex for both the control and treatment experiments.
-   * This script produces Figures 3a, 3c, 5, and some results from Table 1.
+   * This script produces Figures 4a, 4b, 4d, 6, and some results from Table 1.
    * Data needed: ZD_18.mat, CM_18.mat, ZD_19.mat, and CM_19.mat.
-3. channellength.m - This script calculates the channel length for the control and treatment experiments through time.
-   * This script produces Figure 3b and some results from Table 1.
-   * Data needed: CM_18.mat and CM_19.mat
-4. backwater.m - This script calculates the backwater length for the control and treatment experiments through time. See manuscript for more details.
-   * This script produces Figure 4 and some results in Table 1.
+3. channellength.m - This script calculates the channel length for both the control and treatment experiments.
+   * This script produces Figures 4c and some results from Table 1.
    * Data needed: ZD_18.mat, CM_18.mat, ZD_19.mat, and CM_19.mat.
-5. lateral_mobility.m - This script calculates lateral channel mobility, fraction of the delta that is unmodified, and channelization statistics. 
-   * This script produces Figure 6 and SI Figures B1, B5, and B6, as well as some results in Table 1.
+4. backwaterlength.m - This script calculates the backwater length for the control and treatment experiments through time. See manuscript for more details.
+   * This script produces Figure 5 and some results in Table 1.
+   * Data needed: ZD_18.mat, CM_18.mat, ZD_19.mat, and CM_19.mat.
+5. lateralmobility.m - This script calculates lateral channel mobility, fraction of the delta that is unmodified, and channelization statistics. 
+   * This script produces Figure 7a, 7b, and SI Figures B1, B2, B6, and B7, as well as some results in Table 1.
+   * Data needed: ZD_18.mat, CM_18.mat, ZD_19.mat, and CM_19.mat.
+6. lateralmobility_radial.m - This script calculates radial lateral channel mobility. 
+   * This script produces Figure 7c and 7d.
    * Data needed: ZD_18.mat, CM_18.mat, ZD_19.mat, and CM_19.mat.
   
 ## Supplementary Script Files: TDWB_19_2_Channels/code
  1. planformoverlap.m - This script calculates the channel decorrelation metric based on Wickert et al.(2013).
-   * This script produces SI Figure B4.
+   * This script produces SI Figure B5.
    * Data needed: ZD_18.mat, CM_18.mat, ZD_19.mat, and CM_19.mat.
  2. efoldmobility.m - This script creates the time it takes for the channels to visit one e-fold (66% for control and 67% for treatment) of the terrestrial delta top as a function of time.
-   * This script produces SI Figure B7.
+   * This script produces SI Figure B8.
    * Data needed: ZD_18.mat, CM_18.mat, ZD_19.mat, and CM_19.mat. 
 
 ## Figures: TDWB_19_2_Channels/figures
