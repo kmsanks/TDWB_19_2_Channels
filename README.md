@@ -8,7 +8,7 @@ The experimental delta data come from two experiments run at the Tulane Sediment
 For more information on experimental conditions, please see the data repositories hosted at: https://sead2.ncsa.illinois.edu/spaces/5825f529e4b0f3dd19c8d93a.
 
 ## What does this repository provide?
-This repository contains all of the code relevant to produce the results and figures contained in the manuscript titled "Marsh induced backwater: the influence of non-fluvial sedimentation on a delta's channel morphology and kinematics (Sanks et al., in review)". The code contained herein was written using MATLAB R2022a. Note: all the "Core Script Files" should run out the box, as relative paths were used in creation of this script.
+This repository contains all of the code relevant to produce the results and figures contained in the manuscript titled "Marsh induced backwater: the influence of non-fluvial sedimentation on a delta's channel morphology and kinematics (Sanks et al., 2023)". The code contained herein was written using MATLAB R2022a. Note: all the "Core Script Files" should run out the box, as relative paths were used in creation of this script.
 
 ## Contents
 The repository contains three folders:
@@ -20,7 +20,7 @@ The repository contains three folders:
 Please clone the repository in full in order to use the repo. Then download the .mat files from FIGSHARE REPO and put into the data folder. All figure outputs will populate within the figures folder. Note: some figures were modified in Illustrator for visual purposes.
 
 ## Data: TDWB_19_2_Channels/data
-Please download the following files from FIGSHRE REPO and put into this folder. 
+Please download the following files from https://doi.org/10.6084/m9.figshare.22320811.v1 and put into this folder. 
 
 1. ZD_18.mat - A matrix of size 796x522x560, where 560 is time. Each timestep contains a elevation data collected from the control experiment via LiDAR and post-processed into a 5mmx5mm grid. The data has 796 rows and 522 columns corresponding to basin location.
   
