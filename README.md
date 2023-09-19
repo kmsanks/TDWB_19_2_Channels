@@ -74,4 +74,4 @@ Please download the following files from https://doi.org/10.6084/m9.figshare.223
 The figures will be created when the scripts are run. Currently there is only a README.txt files in this folder as a place holder. Note that some figures were modified in Illustrator for publication.
 
 ## Using this repository
-Clone the repository. The scripts can be run in any order, but please note that the data (.mat files) need to be downloaded from FIGSHRE REPOSITORY and placed in the data folder first.
+Clone the repository. The scripts can be run in any order, but please note that the data (.mat files) need to be downloaded from https://figshare.com/articles/dataset/TDWB_19_2_Channels/22320811/1 and placed in the data folder first.
